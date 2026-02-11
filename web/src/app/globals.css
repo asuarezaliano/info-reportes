@@ -1,13 +1,21 @@
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #1E293B;
+  --muted: #64748B;
+  --surface: #F8FAFC;
+  --border: #E2E8F0;
+  --primary: #1E40AF;
+  --primary-hover: #1E3A8A;
+  --primary-light: #EFF6FF;
+  --primary-border: #BFDBFE;
+  --accent: #D97706;
+  --accent-light: #FFFBEB;
+  --accent-border: #FDE68A;
+  --danger: #DC2626;
+  --danger-light: #FEF2F2;
+  --header-bg: #172554;
+  --header-text: #BFDBFE;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
 }
 
 html,
@@ -19,7 +27,7 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -33,10 +41,4 @@ body {
 a {
   color: inherit;
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }

@@ -281,6 +281,12 @@ export class DeclaracionesService {
     };
   }
 
+  private static SORTABLE_COLUMNS = new Set([
+    'nro_consec', 'pais_orige', 'importador', 'despachant', 'descripcio',
+    'acuerdo_co', 'cantidad', 'fob', 'cif_item', 'mes', 'depto_des',
+    'fecha_reg', 'fecha_reci', 'p_bruto', 'p_neto', 'anio',
+  ]);
+
   async listar(filtros: {
     pais_orige?: string;
     importador?: string;
@@ -292,12 +298,21 @@ export class DeclaracionesService {
     busqueda?: string;
     fecha_desde?: Date;
     fecha_hasta?: Date;
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc';
     limit?: number;
     offset?: number;
   }) {
     const where: Prisma.DeclaracionAduaneraWhereInput = {};
 
-    if (filtros.pais_orige) where.pais_orige = { contains: filtros.pais_orige, mode: 'insensitive' };
+    if (filtros.pais_orige) {
+      const paises = filtros.pais_orige.split(',').map((p) => p.trim()).filter(Boolean);
+      if (paises.length === 1) {
+        where.pais_orige = { contains: paises[0], mode: 'insensitive' };
+      } else if (paises.length > 1) {
+        where.pais_orige = { in: paises };
+      }
+    }
     if (filtros.importador) where.importador = { contains: filtros.importador, mode: 'insensitive' };
     if (filtros.proveedor) where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
     if (filtros.descripcion) where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
@@ -317,17 +332,22 @@ export class DeclaracionesService {
     }
 
     if (filtros.fecha_desde || filtros.fecha_hasta) {
-      where.fecha_reg = {};
-      if (filtros.fecha_desde) (where.fecha_reg as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
-      if (filtros.fecha_hasta) (where.fecha_reg as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
+      where.fecha_reci = {};
+      if (filtros.fecha_desde) (where.fecha_reci as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
+      if (filtros.fecha_hasta) (where.fecha_reci as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
     }
+
+    const orderBy: Record<string, 'asc' | 'desc'> =
+      filtros.sortBy && DeclaracionesService.SORTABLE_COLUMNS.has(filtros.sortBy)
+        ? { [filtros.sortBy]: filtros.sortDir ?? 'asc' }
+        : { fecha_reci: 'desc' };
 
     const [data, total, agregados] = await Promise.all([
       this.prisma.declaracionAduanera.findMany({
         where,
         take: filtros.limit ?? 50,
         skip: filtros.offset ?? 0,
-        orderBy: { fecha_reg: 'desc' },
+        orderBy,
       }),
       this.prisma.declaracionAduanera.count({ where }),
       this.prisma.declaracionAduanera.aggregate({

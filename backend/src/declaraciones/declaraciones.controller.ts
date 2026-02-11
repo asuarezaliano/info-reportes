@@ -86,6 +86,8 @@ export class DeclaracionesController {
     @Query('busqueda') busqueda?: string,
     @Query('fecha_desde') fecha_desde?: string,
     @Query('fecha_hasta') fecha_hasta?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortDir') sortDir?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -100,6 +102,8 @@ export class DeclaracionesController {
       busqueda,
       fecha_desde: fecha_desde ? new Date(fecha_desde) : undefined,
       fecha_hasta: fecha_hasta ? new Date(fecha_hasta) : undefined,
+      sortBy,
+      sortDir: sortDir === 'desc' ? 'desc' : 'asc',
       limit: limit ? parseInt(limit, 10) : undefined,
       offset: offset ? parseInt(offset, 10) : undefined,
     });

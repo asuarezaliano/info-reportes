@@ -11,29 +11,36 @@ import {
   resumenGeneral,
   type FiltrosBusqueda,
 } from "@/services/declaraciones.service";
+import MultiSelectCountry from "@/components/multi-select-country";
+import { getFlag } from "@/lib/country-flags";
 import styles from "./page.module.css";
 
 const REPORTE_PAGE_SIZE = 100;
 
 export default function DatosPage() {
   // Main tab
-  const [tabPrincipal, setTabPrincipal] = useState<"busqueda" | "reportes">("busqueda");
+  const [tabPrincipal, setTabPrincipal] = useState<"busqueda" | "reportes">(
+    "busqueda",
+  );
 
   const [filtros, setFiltros] = useState<FiltrosBusqueda>({ limit: 100 });
   const [pagina, setPagina] = useState(0);
-  const [tabReporte, setTabReporte] = useState<"pais" | "importador" | "depto">("pais");
+  const [tabReporte, setTabReporte] = useState<"pais" | "importador" | "depto">(
+    "pais",
+  );
   const [mesInput, setMesInput] = useState("");
   const [anioInput, setAnioInput] = useState("");
   const [mesFiltro, setMesFiltro] = useState("");
   const [anioFiltro, setAnioFiltro] = useState("");
   const [paginaReporte, setPaginaReporte] = useState(0);
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   // Filter form state
-  const [paisOrige, setPaisOrige] = useState("");
+  const [paisOrige, setPaisOrige] = useState<string[]>([]);
   const [deptoDes, setDeptoDes] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
-  const [busqueda, setBusqueda] = useState("");
   const [importador, setImportador] = useState("");
   const [descripcion, setDescripcion] = useState("");
 
@@ -45,24 +52,32 @@ export default function DatosPage() {
   });
 
   const { data: listado, isLoading } = useQuery({
-    queryKey: ["declaraciones", filtros, pagina],
+    queryKey: ["declaraciones", filtros, pagina, sortCol, sortDir],
     queryFn: () =>
       buscarDeclaraciones({
         ...filtros,
-        offset: pagina * (filtros.limit || 25),
+        sortBy: sortCol ?? undefined,
+        sortDir: sortCol ? sortDir : undefined,
+        offset: pagina * (filtros.limit || 100),
       }),
   });
 
   const { data: resumen } = useQuery({
     queryKey: ["resumen", mesFiltro, anioFiltro],
     queryFn: () =>
-      resumenGeneral(mesFiltro || undefined, anioFiltro ? parseInt(anioFiltro) : undefined),
+      resumenGeneral(
+        mesFiltro || undefined,
+        anioFiltro ? parseInt(anioFiltro) : undefined,
+      ),
   });
 
   const { data: reportePais } = useQuery({
     queryKey: ["reporte-pais", mesFiltro, anioFiltro],
     queryFn: () =>
-      reportePorPais(mesFiltro || undefined, anioFiltro ? parseInt(anioFiltro) : undefined),
+      reportePorPais(
+        mesFiltro || undefined,
+        anioFiltro ? parseInt(anioFiltro) : undefined,
+      ),
     enabled: tabReporte === "pais",
   });
 
@@ -81,8 +96,7 @@ export default function DatosPage() {
   const handleBuscar = (e: React.FormEvent) => {
     e.preventDefault();
     setFiltros({
-      busqueda: busqueda || undefined,
-      pais_orige: paisOrige || undefined,
+      pais_orige: paisOrige.length > 0 ? paisOrige.join(",") : undefined,
       importador: importador || undefined,
       descripcion: descripcion || undefined,
       depto_des: deptoDes || undefined,
@@ -94,11 +108,10 @@ export default function DatosPage() {
   };
 
   const handleLimpiar = () => {
-    setPaisOrige("");
+    setPaisOrige([]);
     setDeptoDes("");
     setFechaDesde("");
     setFechaHasta("");
-    setBusqueda("");
     setImportador("");
     setDescripcion("");
     setFiltros({ limit: 100 });
@@ -110,7 +123,23 @@ export default function DatosPage() {
     : 0;
 
   const fmt = (n: number) =>
-    n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    n.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const handleSort = (col: string) => {
+    if (sortCol === col) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortCol(col);
+      setSortDir("asc");
+    }
+  };
+
+  const sortIndicator = (col: string) =>
+    sortCol === col ? (sortDir === "asc" ? " ▲" : " ▼") : "";
+
 
   // Paginate report data client-side
   const paginate = <T,>(data: T[] | undefined) => {
@@ -123,17 +152,30 @@ export default function DatosPage() {
     };
   };
 
-  const paisPag = useMemo(() => paginate(reportePais), [reportePais, paginaReporte]);
-  const importadorPag = useMemo(() => paginate(reporteImportador), [reporteImportador, paginaReporte]);
-  const deptoPag = useMemo(() => paginate(reporteDepto), [reporteDepto, paginaReporte]);
+  const paisPag = useMemo(
+    () => paginate(reportePais),
+    [reportePais, paginaReporte],
+  );
+  const importadorPag = useMemo(
+    () => paginate(reporteImportador),
+    [reporteImportador, paginaReporte],
+  );
+  const deptoPag = useMemo(
+    () => paginate(reporteDepto),
+    [reporteDepto, paginaReporte],
+  );
 
-  const currentReportPag = tabReporte === "pais" ? paisPag : tabReporte === "importador" ? importadorPag : deptoPag;
+  const currentReportPag =
+    tabReporte === "pais"
+      ? paisPag
+      : tabReporte === "importador"
+        ? importadorPag
+        : deptoPag;
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <h1>Datos Aduaneros</h1>
-        <p>Carga archivos Excel o CSV, busca y genera reportes</p>
       </header>
 
       {/* ── Tabs principales ── */}
@@ -161,14 +203,13 @@ export default function DatosPage() {
           <section className={styles.busqueda}>
             <h2>Filtros de Búsqueda</h2>
             <form onSubmit={handleBuscar} className={styles.filterGrid}>
-              <div className={styles.filterRow}>
+              <div className={styles.filterRow4}>
                 <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>Búsqueda general</label>
-                  <input
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="País, importador, descripción..."
-                    className={styles.input}
+                  <label className={styles.filterLabel}>País de origen</label>
+                  <MultiSelectCountry
+                    options={filterOptions?.paises ?? []}
+                    selected={paisOrige}
+                    onChange={setPaisOrige}
                   />
                 </div>
                 <div className={styles.filterGroup}>
@@ -181,29 +222,15 @@ export default function DatosPage() {
                   />
                 </div>
                 <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>Descripción producto</label>
+                  <label className={styles.filterLabel}>
+                    Descripción producto
+                  </label>
                   <input
                     value={descripcion}
                     onChange={(e) => setDescripcion(e.target.value)}
                     placeholder="Descripción del producto"
                     className={styles.input}
                   />
-                </div>
-              </div>
-
-              <div className={styles.filterRow}>
-                <div className={styles.filterGroup}>
-                  <label className={styles.filterLabel}>País de origen</label>
-                  <select
-                    value={paisOrige}
-                    onChange={(e) => setPaisOrige(e.target.value)}
-                    className={styles.select}
-                  >
-                    <option value="">Todos los países</option>
-                    {filterOptions?.paises.map((pais) => (
-                      <option key={pais} value={pais}>{pais}</option>
-                    ))}
-                  </select>
                 </div>
                 <div className={styles.filterGroup}>
                   <label className={styles.filterLabel}>Departamento</label>
@@ -214,10 +241,15 @@ export default function DatosPage() {
                   >
                     <option value="">Todos los departamentos</option>
                     {filterOptions?.departamentos.map((dep) => (
-                      <option key={dep} value={dep}>{dep}</option>
+                      <option key={dep} value={dep}>
+                        {dep}
+                      </option>
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div className={styles.filterRow4}>
                 <div className={styles.filterGroup}>
                   <label className={styles.filterLabel}>Fecha desde</label>
                   <input
@@ -236,13 +268,19 @@ export default function DatosPage() {
                     className={styles.input}
                   />
                 </div>
-              </div>
-
-              <div className={styles.filterActions}>
-                <button type="submit" className={styles.btnPrimary}>Buscar</button>
-                <button type="button" onClick={handleLimpiar} className={styles.btnSecondary}>
-                  Limpiar filtros
-                </button>
+                <div className={styles.filterGroup} />
+                <div className={styles.filterActions}>
+                  <button type="submit" className={styles.btnPrimary}>
+                    Buscar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLimpiar}
+                    className={styles.btnSecondary}
+                  >
+                    Limpiar
+                  </button>
+                </div>
               </div>
             </form>
           </section>
@@ -258,33 +296,96 @@ export default function DatosPage() {
                   <table className={styles.tablaDatos}>
                     <thead>
                       <tr>
-                        <th>Nro</th>
-                        <th>País</th>
-                        <th>Importador</th>
-                        <th>Despachante</th>
-                        <th>Descripción</th>
-                        <th>Acuerdo</th>
-                        <th>Cantidad</th>
-                        <th>FOB (USD)</th>
-                        <th>CIF Item (USD)</th>
-                        <th>Mes</th>
-                        <th>Depto</th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("nro_consec")}
+                        >
+                          Nro{sortIndicator("nro_consec")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("pais_orige")}
+                        >
+                          País{sortIndicator("pais_orige")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("importador")}
+                        >
+                          Importador{sortIndicator("importador")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("despachant")}
+                        >
+                          Despachante{sortIndicator("despachant")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("descripcio")}
+                        >
+                          Descripción{sortIndicator("descripcio")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("acuerdo_co")}
+                        >
+                          Acuerdo{sortIndicator("acuerdo_co")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("cantidad")}
+                        >
+                          Cantidad{sortIndicator("cantidad")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("fob")}
+                        >
+                          FOB (USD){sortIndicator("fob")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("cif_item")}
+                        >
+                          CIF Item (USD){sortIndicator("cif_item")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("mes")}
+                        >
+                          Mes{sortIndicator("mes")}
+                        </th>
+                        <th
+                          className={styles.sortable}
+                          onClick={() => handleSort("depto_des")}
+                        >
+                          Depto{sortIndicator("depto_des")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {listado?.data.map((d) => (
                         <tr key={d.id}>
                           <td>{d.nro_consec}</td>
-                          <td>{d.pais_orige}</td>
+                          <td>
+                            {d.pais_orige
+                              ? `${getFlag(d.pais_orige)} ${d.pais_orige}`
+                              : "-"}
+                          </td>
                           <td>{d.importador}</td>
                           <td>{d.despachant ?? "-"}</td>
                           <td className={styles.desc}>
-                            {d.descripcio ? String(d.descripcio).slice(0, 40) + "..." : "-"}
+                            {d.descripcio
+                              ? String(d.descripcio).slice(0, 40) + "..."
+                              : "-"}
                           </td>
                           <td>{d.acuerdo_co ?? "-"}</td>
                           <td>{d.cantidad}</td>
                           <td>{d.fob != null ? fmt(Number(d.fob)) : "-"}</td>
-                          <td>{d.cif_item != null ? fmt(Number(d.cif_item)) : "-"}</td>
+                          <td>
+                            {d.cif_item != null ? fmt(Number(d.cif_item)) : "-"}
+                          </td>
                           <td>{d.mes}</td>
                           <td>{d.depto_des}</td>
                         </tr>
@@ -296,16 +397,28 @@ export default function DatosPage() {
                 {listado && (
                   <div className={styles.summaryBar}>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel}>Registros filtrados:</span>
-                      <span className={styles.summaryValue}>{listado.total.toLocaleString()}</span>
+                      <span className={styles.summaryLabel}>
+                        Registros filtrados:
+                      </span>
+                      <span className={styles.summaryValue}>
+                        {listado.total.toLocaleString()}
+                      </span>
                     </div>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel}>Total FOB (USD):</span>
-                      <span className={styles.summaryValue}>${fmt(listado.totalFob)}</span>
+                      <span className={styles.summaryLabel}>
+                        Total FOB (USD):
+                      </span>
+                      <span className={styles.summaryValue}>
+                        ${fmt(listado.totalFob)}
+                      </span>
                     </div>
                     <div className={styles.summaryItem}>
-                      <span className={styles.summaryLabel}>Total CIF (USD):</span>
-                      <span className={styles.summaryValue}>${fmt(listado.totalCif)}</span>
+                      <span className={styles.summaryLabel}>
+                        Total CIF (USD):
+                      </span>
+                      <span className={styles.summaryValue}>
+                        ${fmt(listado.totalCif)}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -318,9 +431,13 @@ export default function DatosPage() {
                     >
                       Anterior
                     </button>
-                    <span>Página {pagina + 1} de {totalPaginas}</span>
+                    <span>
+                      Página {pagina + 1} de {totalPaginas}
+                    </span>
                     <button
-                      onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
+                      onClick={() =>
+                        setPagina((p) => Math.min(totalPaginas - 1, p + 1))
+                      }
                       disabled={pagina >= totalPaginas - 1}
                     >
                       Siguiente
@@ -374,26 +491,38 @@ export default function DatosPage() {
                 className={styles.input}
               />
               <button
-                onClick={() => { setMesFiltro(mesInput); setAnioFiltro(anioInput); }}
+                onClick={() => {
+                  setMesFiltro(mesInput);
+                  setAnioFiltro(anioInput);
+                }}
                 className={styles.btnPrimary}
               >
                 Aplicar
               </button>
               <div className={styles.reportTabGroup}>
                 <button
-                  onClick={() => { setTabReporte("pais"); setPaginaReporte(0); }}
+                  onClick={() => {
+                    setTabReporte("pais");
+                    setPaginaReporte(0);
+                  }}
                   className={`${styles.reportTab} ${tabReporte === "pais" ? styles.btnActive : ""}`}
                 >
                   Por país
                 </button>
                 <button
-                  onClick={() => { setTabReporte("importador"); setPaginaReporte(0); }}
+                  onClick={() => {
+                    setTabReporte("importador");
+                    setPaginaReporte(0);
+                  }}
                   className={`${styles.reportTab} ${tabReporte === "importador" ? styles.btnActive : ""}`}
                 >
                   Por importador
                 </button>
                 <button
-                  onClick={() => { setTabReporte("depto"); setPaginaReporte(0); }}
+                  onClick={() => {
+                    setTabReporte("depto");
+                    setPaginaReporte(0);
+                  }}
                   className={`${styles.reportTab} ${tabReporte === "depto" ? styles.btnActive : ""}`}
                 >
                   Por departamento
@@ -401,7 +530,9 @@ export default function DatosPage() {
               </div>
             </div>
 
-            <p className={styles.reportCount}>{currentReportPag.total} resultados</p>
+            <p className={styles.reportCount}>
+              {currentReportPag.total} resultados
+            </p>
 
             <div className={styles.tablaReporte}>
               {tabReporte === "pais" && reportePais && (
@@ -480,9 +611,15 @@ export default function DatosPage() {
                 >
                   Anterior
                 </button>
-                <span>Página {paginaReporte + 1} de {currentReportPag.totalPages}</span>
+                <span>
+                  Página {paginaReporte + 1} de {currentReportPag.totalPages}
+                </span>
                 <button
-                  onClick={() => setPaginaReporte((p) => Math.min(currentReportPag.totalPages - 1, p + 1))}
+                  onClick={() =>
+                    setPaginaReporte((p) =>
+                      Math.min(currentReportPag.totalPages - 1, p + 1),
+                    )
+                  }
                   disabled={paginaReporte >= currentReportPag.totalPages - 1}
                 >
                   Siguiente

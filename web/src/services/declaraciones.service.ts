@@ -43,6 +43,8 @@ export type FiltrosBusqueda = {
   depto_des?: string;
   fecha_desde?: string;
   fecha_hasta?: string;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
   limit?: number;
   offset?: number;
 };
