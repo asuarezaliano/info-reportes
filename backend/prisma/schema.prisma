@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeclaracionAduanera {
+  id           String   @id @default(uuid())
+  // Identificación
+  desadu       String?  // Despacho aduanero
+  aduana       String?
+  anio         Int?
+  serial       String?
+  nro_consec   String?
+  nro_item     Int?
+  // Producto
+  partida_ar   String?  // Código arancelario
+  unid_med     String?
+  descripcio   String?
+  pais_orige   String?  // País de origen
+  acuerdo_co   String?
+  regimen      Int?
+  // Pesos y cantidades
+  p_bruto      Decimal? @db.Decimal(18, 2)
+  p_neto       Decimal? @db.Decimal(18, 2)
+  cantidad     Decimal? @db.Decimal(18, 2)
+  estado_mer   String?  // NUEVA, USADA
+  // Valores en USD
+  cif_item     Decimal? @db.Decimal(18, 2)
+  flete_item   Decimal? @db.Decimal(18, 2)
+  seg_item     Decimal? @db.Decimal(18, 2)
+  gast_item    Decimal? @db.Decimal(18, 2)
+  fob         Decimal? @db.Decimal(18, 2)
+  cif         Decimal? @db.Decimal(18, 2)
+  // Partes
+  importador   String?
+  nit_desp     String?
+  despachant   String?
+  proveedor    String?
+  pais_pro     String?
+  depto_des    String?  // Departamento destino
+  // Fechas y proceso
+  fecha_reg    DateTime?
+  mes          String?
+  canal        String?  // VERDE, ROJO
+  tipo_proc    String?
+  embarque     String?
+  adu_ing      String?
+  fecha_reci   DateTime?
+  // Datos adicionales (resto de columnas)
+  datosExtra   Json?
+  createdAt    DateTime @default(now())
+
+  @@index([pais_orige])
+  @@index([importador])
+  @@index([mes])
+  @@index([fecha_reg])
+  @@index([partida_ar])
+  @@index([depto_des])
+}

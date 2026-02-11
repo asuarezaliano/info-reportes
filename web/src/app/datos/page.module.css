@@ -1,0 +1,226 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.header p {
+  color: var(--foreground);
+  opacity: 0.7;
+  font-size: 0.95rem;
+}
+
+.upload {
+  background: var(--background);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.upload h2,
+.busqueda h2,
+.reportes h2,
+.datos h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.uploadForm {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fileInput {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 6px;
+  background: var(--background);
+}
+
+.btnPrimary {
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btnPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success {
+  margin-top: 0.75rem;
+  color: #059669;
+  font-size: 0.9rem;
+}
+
+.error {
+  margin-top: 0.75rem;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: var(--background);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.card span {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-bottom: 0.25rem;
+}
+
+.card strong {
+  font-size: 1.25rem;
+}
+
+.busqueda {
+  background: var(--background);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.searchForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--background);
+}
+
+.reportes {
+  background: var(--background);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.reportFilters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.reportFilters button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 6px;
+  background: var(--background);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.reportFilters button:hover {
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.btnActive {
+  background: #2563eb !important;
+  color: white !important;
+  border-color: #2563eb !important;
+}
+
+.tablaReporte table,
+.tablaDatos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tablaReporte th,
+.tablaReporte td,
+.tablaDatos th,
+.tablaDatos td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.tablaReporte th,
+.tablaDatos th {
+  font-weight: 600;
+  background: rgba(128, 128, 128, 0.08);
+}
+
+.datos {
+  background: var(--background);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.desc {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.paginacion button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 6px;
+  background: var(--background);
+  cursor: pointer;
+}
+
+.paginacion button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,0 +1,428 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { parse as parseCsvStream } from 'csv-parse';
+import { parse as parseCsvSync } from 'csv-parse/sync';
+import * as XLSX from 'xlsx';
+import type { Prisma } from '../../generated/prisma/client';
+import { closeSync, createReadStream, openSync, readFileSync, readSync } from 'node:fs';
+
+@Injectable()
+export class DeclaracionesService {
+  constructor(private prisma: PrismaService) {}
+
+  async importarArchivoDesdeDisco(
+    filePath: string,
+    tipo: 'csv' | 'excel',
+    delimiter = '\t',
+  ) {
+    if (tipo === 'excel') {
+      const buffer = readFileSync(filePath);
+      return this.importarArchivo(buffer, 'excel', delimiter);
+    }
+
+    return this.importarCsvStreamDesdeDisco(filePath, delimiter);
+  }
+
+  async importarArchivo(buffer: Buffer, tipo: 'csv' | 'excel', delimiter = '\t') {
+    const records =
+      tipo === 'excel'
+        ? this.leerExcel(buffer)
+        : this.leerCSVBuffer(buffer, delimiter);
+    return this.procesarRegistros(records);
+  }
+
+  private leerCSVBuffer(buffer: Buffer, delimiter: string) {
+    const content = buffer.toString('utf8');
+    const detectedDelimiter =
+      delimiter && delimiter.length > 0 ? delimiter : this.detectDelimiter(content);
+    const fromLine = this.detectFromLine(content, detectedDelimiter);
+
+    return parseCsvSync(content, {
+      columns: true,
+      delimiter: detectedDelimiter,
+      from_line: fromLine,
+      relax_column_count: true,
+      relax_quotes: true,
+      trim: true,
+      bom: true,
+    }) as Record<string, string>[];
+  }
+
+  private async importarCsvStreamDesdeDisco(filePath: string, delimiter: string) {
+    const resultados = { importados: 0, errores: 0, mensajes: [] as string[] };
+
+    const preview = this.readFileHead(filePath, 128 * 1024);
+    const detectedDelimiter =
+      delimiter && delimiter.length > 0 ? delimiter : this.detectDelimiter(preview);
+    const fromLine = this.detectFromLine(preview, detectedDelimiter);
+
+    const parser = parseCsvStream({
+      columns: true,
+      delimiter: detectedDelimiter,
+      from_line: fromLine,
+      relax_column_count: true,
+      relax_quotes: true,
+      trim: true,
+      bom: true,
+    });
+
+    const stream = createReadStream(filePath);
+    stream.pipe(parser);
+
+    let rowNumber = fromLine;
+    for await (const row of parser as AsyncIterable<Record<string, string>>) {
+      try {
+        const data = this.mapearFila(row);
+        if (data) {
+          await this.prisma.declaracionAduanera.create({ data });
+          resultados.importados++;
+        }
+      } catch (error) {
+        resultados.errores++;
+        resultados.mensajes.push(
+          `Fila ${rowNumber}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      } finally {
+        rowNumber++;
+      }
+    }
+
+    return resultados;
+  }
+
+  private readFileHead(filePath: string, bytes: number): string {
+    const fd = openSync(filePath, 'r');
+    try {
+      const buffer = Buffer.alloc(bytes);
+      const read = readSync(fd, buffer, 0, bytes, 0);
+      return buffer.subarray(0, read).toString('utf8');
+    } finally {
+      closeSync(fd);
+    }
+  }
+
+  private detectDelimiter(content: string): string {
+    const firstDataLine = content
+      .split(/\r?\n/)
+      .find((line) => line && line.trim().length > 0) ?? '';
+
+    const candidates = ['\t', ';', ',', '|'];
+    let best = '\t';
+    let bestCount = -1;
+
+    for (const candidate of candidates) {
+      const count = firstDataLine.split(candidate).length - 1;
+      if (count > bestCount) {
+        bestCount = count;
+        best = candidate;
+      }
+    }
+
+    return best;
+  }
+
+  private detectFromLine(content: string, delimiter: string): number {
+    const lines = content.split(/\r?\n/);
+    if (lines.length < 2) return 1;
+
+    const first = lines[0] ?? '';
+    const second = lines[1] ?? '';
+
+    const firstCount = first.split(delimiter).length - 1;
+    const secondCount = second.split(delimiter).length - 1;
+    const looksLikeTitle = /^tabla\s+\d+/i.test(first.trim());
+
+    return looksLikeTitle || (firstCount === 0 && secondCount > 0) ? 2 : 1;
+  }
+
+  private leerExcel(buffer: Buffer): Record<string, string>[] {
+    const workbook = XLSX.read(buffer, { type: 'buffer', raw: true });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, {
+      header: 1,
+      defval: '',
+    }) as unknown[][];
+
+    if (data.length < 2) return [];
+
+    const headers = (data[0] ?? []).map((h) => String(h));
+    const rows: Record<string, string>[] = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i] ?? [];
+      const obj: Record<string, string> = {};
+      headers.forEach((h, j) => {
+        const val = row[j];
+        obj[h] = val != null ? String(val).trim() : '';
+      });
+      rows.push(obj);
+    }
+
+    return rows;
+  }
+
+  private async procesarRegistros(records: Record<string, string>[]) {
+    const resultados = { importados: 0, errores: 0, mensajes: [] as string[] };
+
+    for (let i = 0; i < records.length; i++) {
+      try {
+        const row = records[i];
+        const data = this.mapearFila(row);
+        if (data) {
+          await this.prisma.declaracionAduanera.create({ data });
+          resultados.importados++;
+        }
+      } catch (error) {
+        resultados.errores++;
+        resultados.mensajes.push(
+          `Fila ${i + 2}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    return resultados;
+  }
+
+  async importarCSV(buffer: Buffer, delimiter = '\t') {
+    return this.importarArchivo(buffer, 'csv', delimiter);
+  }
+
+  private mapearFila(row: Record<string, string>): Prisma.DeclaracionAduaneraCreateInput | null {
+    const parseDecimal = (val: string) => {
+      if (!val || val.trim() === '') return null;
+      const num = parseFloat(val.replace(',', '.'));
+      return isNaN(num) ? null : num;
+    };
+
+    const parseDate = (val: string) => {
+      if (!val || val.trim() === '') return null;
+      const [d, m, y] = val.split('/');
+      if (!d || !m || !y) return null;
+      const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      return isNaN(date.getTime()) ? null : date;
+    };
+
+    const parseIntSafe = (val: string) => {
+      if (!val || val.trim() === '') return null;
+      const num = parseInt(val, 10);
+      return isNaN(num) ? null : num;
+    };
+
+    const get = (key: string) => {
+      const val = row[key] ?? row[key.toUpperCase()];
+      return val?.trim() || null;
+    };
+
+    const desadu = get('DESADU');
+    const aduana = get('ADUANA');
+    if (!desadu && !aduana && !get('NRO_CONSEC')) return null;
+
+    const datosExtra: Record<string, unknown> = {};
+    const columnasExtra = [
+      'CODIGO_NAC', 'DECLARACIO', 'DOC_EMBARQ', 'C_BULTO', 'CODIGO_EMB', 'TIPO_DUI_A', 'VERSION_A',
+      'GA_EFECT', 'GA_GARAN', 'GA_LIBER', 'GA_SIN_P', 'ICD_EFECT', 'ICD_LIBER', 'ICD_GARAN', 'ICD_SIN_P',
+      'ICE_EFECT', 'ICE_GARAN', 'ICE_LIBER', 'ICE_SIN_P', 'IEHD_EFECT', 'IEHD_LIBER', 'IEHD_SIN_P',
+      'IMPZONFRAN', 'INS_PREVIA', 'IVA_EFECT', 'IVA_GARAN', 'IVA_LIBER', 'IVA_SIN_P', 'LEVABANDON',
+      'VGA_VALOR', 'VIC_VALOR', 'VIH_VALOR', 'VIV_VALOR', 'NRO_REGIST', 'CODIGO_MAR', 'CODIGO_CLA',
+      'CODIGO_TIP', 'CODIGO_SUB', 'CILINDRADA', 'MOTOR', 'CHASIS', 'ANIO_FABRI', 'ANIO_MODEL',
+      'CODIGO_TRA', 'NRO_RUEDAS', 'NRO_PUERTA', 'CAPACIDAD_', 'CODIGO_COM', 'TRANSMISIO',
+      'PATRON_DEC', 'MANIFIESTO', 'FECHA_MAN', 'FECHA_LOC', 'NRO_VAL', 'FECHA_VAL', 'FECHA_PAG',
+      'FECHA_CAN', 'FECHA_VIST', 'FECHA_LEV', 'FECHA_SAL', 'DOC_IMP', 'NRO_DOC', 'DIR_PROVEE',
+      'REG_MAN', 'TASA_CAM', 'NAT_TRANS', 'TRANS_FRO', 'TRANS_INT', 'FLETE', 'SEG', 'GASTOS',
+      'ITMES', 'RECIBO', 'TIPO_DUI_B', 'VERSION_B', 'FECHA_ENM', 'REF_DIM', 'SID_SUMA',
+      'HRS_LOCMA', 'HRS_VALOC', 'HRS_PAVAL', 'HRS_CAPAG', 'HRS_VISCA', 'HRS_LEVIS', 'HRS_SALEV', 'HRS_SALMAN',
+    ];
+
+    for (const col of columnasExtra) {
+      const val = get(col);
+      if (val) datosExtra[col] = val;
+    }
+
+    return {
+      desadu,
+      aduana: get('ADUANA') || aduana,
+      anio: parseIntSafe(get('ANIO') ?? ''),
+      serial: get('SERIAL'),
+      nro_consec: get('NRO_CONSEC'),
+      nro_item: parseIntSafe(get('NRO_ITEM') ?? ''),
+      partida_ar: get('PARTIDA_AR'),
+      unid_med: get('UNID_MED'),
+      descripcio: get('DESCRIPCIO'),
+      pais_orige: get('PAIS_ORIGE'),
+      acuerdo_co: get('ACUERDO_CO'),
+      regimen: parseIntSafe(get('REGIMEN') ?? ''),
+      p_bruto: parseDecimal(get('P_BRUTO') ?? ''),
+      p_neto: parseDecimal(get('P_NETO') ?? ''),
+      cantidad: parseDecimal(get('CANTIDAD') ?? ''),
+      estado_mer: get('ESTADO_MER'),
+      cif_item: parseDecimal(get('CIF_ITEM') ?? ''),
+      flete_item: parseDecimal(get('FLETE_ITEM') ?? ''),
+      seg_item: parseDecimal(get('SEG_ITEM') ?? ''),
+      gast_item: parseDecimal(get('GAST_ITEM') ?? ''),
+      fob: parseDecimal(get('FOB') ?? ''),
+      cif: parseDecimal(get('CIF') ?? ''),
+      importador: get('IMPORTADOR'),
+      nit_desp: get('NIT_DESP'),
+      despachant: get('DESPACHANT'),
+      proveedor: get('PROVEEDOR'),
+      pais_pro: get('PAIS_PRO'),
+      depto_des: get('DEPTO_DES'),
+      fecha_reg: parseDate(get('FECHA_REG') ?? ''),
+      mes: get('MES'),
+      canal: get('CANAL'),
+      tipo_proc: get('TIPO_PROC'),
+      embarque: get('EMBARQUE'),
+      adu_ing: get('ADU_ING'),
+      fecha_reci: parseDate(get('FECHA_RECI') ?? ''),
+      datosExtra:
+        Object.keys(datosExtra).length > 0
+          ? (datosExtra as Prisma.InputJsonValue)
+          : undefined,
+    };
+  }
+
+  async listar(filtros: {
+    pais_orige?: string;
+    importador?: string;
+    proveedor?: string;
+    descripcion?: string;
+    partida_ar?: string;
+    mes?: string;
+    depto_des?: string;
+    busqueda?: string;
+    fecha_desde?: Date;
+    fecha_hasta?: Date;
+    limit?: number;
+    offset?: number;
+  }) {
+    const where: Prisma.DeclaracionAduaneraWhereInput = {};
+
+    if (filtros.pais_orige) where.pais_orige = { contains: filtros.pais_orige, mode: 'insensitive' };
+    if (filtros.importador) where.importador = { contains: filtros.importador, mode: 'insensitive' };
+    if (filtros.proveedor) where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
+    if (filtros.descripcion) where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
+    if (filtros.partida_ar) where.partida_ar = { contains: filtros.partida_ar, mode: 'insensitive' };
+    if (filtros.mes) where.mes = filtros.mes;
+    if (filtros.depto_des) where.depto_des = filtros.depto_des;
+
+    if (filtros.busqueda) {
+      where.OR = [
+        { pais_orige: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { importador: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { proveedor: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { descripcio: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { partida_ar: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { nro_consec: { contains: filtros.busqueda, mode: 'insensitive' } },
+      ];
+    }
+
+    if (filtros.fecha_desde || filtros.fecha_hasta) {
+      where.fecha_reg = {};
+      if (filtros.fecha_desde) (where.fecha_reg as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
+      if (filtros.fecha_hasta) (where.fecha_reg as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.declaracionAduanera.findMany({
+        where,
+        take: filtros.limit ?? 50,
+        skip: filtros.offset ?? 0,
+        orderBy: { fecha_reg: 'desc' },
+      }),
+      this.prisma.declaracionAduanera.count({ where }),
+    ]);
+
+    return { data, total };
+  }
+
+  async reportePorPais(filtros?: { mes?: string; anio?: number }) {
+    const where: Prisma.DeclaracionAduaneraWhereInput = {};
+    if (filtros?.mes) where.mes = filtros.mes;
+    if (filtros?.anio) where.anio = filtros.anio;
+
+    const result = await this.prisma.declaracionAduanera.groupBy({
+      by: ['pais_orige'],
+      where: { ...where, pais_orige: { not: null } },
+      _sum: { cif_item: true, fob: true, cantidad: true },
+      _count: true,
+    });
+
+    return result
+      .filter((r) => r.pais_orige)
+      .map((r) => ({
+        pais: r.pais_orige,
+        totalCif: Number(r._sum.cif_item ?? 0),
+        totalFob: Number(r._sum.fob ?? 0),
+        totalCantidad: Number(r._sum.cantidad ?? 0),
+        cantidadRegistros: r._count,
+      }))
+      .sort((a, b) => b.totalCif - a.totalCif);
+  }
+
+  async reportePorImportador(filtros?: { mes?: string; limit?: number }) {
+    const where: Prisma.DeclaracionAduaneraWhereInput = {};
+    if (filtros?.mes) where.mes = filtros.mes;
+
+    const result = await this.prisma.declaracionAduanera.groupBy({
+      by: ['importador', 'nit_desp'],
+      where: { ...where, importador: { not: null } },
+      _sum: { cif_item: true, fob: true },
+      _count: true,
+    });
+
+    return result
+      .filter((r) => r.importador)
+      .map((r) => ({
+        importador: r.importador,
+        nit: r.nit_desp,
+        totalCif: Number(r._sum.cif_item ?? 0),
+        totalFob: Number(r._sum.fob ?? 0),
+        cantidadRegistros: r._count,
+      }))
+      .sort((a, b) => b.totalCif - a.totalCif)
+      .slice(0, filtros?.limit ?? 20);
+  }
+
+  async reportePorDepartamento(filtros?: { mes?: string }) {
+    const where: Prisma.DeclaracionAduaneraWhereInput = {};
+    if (filtros?.mes) where.mes = filtros.mes;
+
+    const result = await this.prisma.declaracionAduanera.groupBy({
+      by: ['depto_des'],
+      where: { ...where, depto_des: { not: null } },
+      _sum: { cif_item: true, fob: true },
+      _count: true,
+    });
+
+    return result
+      .filter((r) => r.depto_des)
+      .map((r) => ({
+        departamento: r.depto_des,
+        totalCif: Number(r._sum.cif_item ?? 0),
+        totalFob: Number(r._sum.fob ?? 0),
+        cantidadRegistros: r._count,
+      }))
+      .sort((a, b) => b.totalCif - a.totalCif);
+  }
+
+  async resumenGeneral(filtros?: { mes?: string; anio?: number }) {
+    const where: Prisma.DeclaracionAduaneraWhereInput = {};
+    if (filtros?.mes) where.mes = filtros.mes;
+    if (filtros?.anio) where.anio = filtros.anio;
+
+    const [agregados, totalRegistros] = await Promise.all([
+      this.prisma.declaracionAduanera.aggregate({
+        where,
+        _sum: { cif_item: true, fob: true, cantidad: true },
+      }),
+      this.prisma.declaracionAduanera.count({ where }),
+    ]);
+
+    return {
+      totalRegistros,
+      totalCif: Number(agregados._sum.cif_item ?? 0),
+      totalFob: Number(agregados._sum.fob ?? 0),
+      totalCantidad: Number(agregados._sum.cantidad ?? 0),
+    };
+  }
+}

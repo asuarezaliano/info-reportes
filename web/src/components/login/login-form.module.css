@@ -1,0 +1,120 @@
+.card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: var(--background);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    border-color: #2a2a2a;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.field input {
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .field input {
+    border-color: #333;
+  }
+
+  .field input:focus {
+    border-color: #3b82f6;
+  }
+}
+
+.field input::placeholder {
+  color: #999;
+}
+
+.button {
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.button:hover {
+  background: #2563eb;
+}
+
+.button:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+.error {
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.85rem;
+  border: 1px solid #fecaca;
+}
+
+@media (prefers-color-scheme: dark) {
+  .error {
+    background: #1c0a0a;
+    border-color: #5c1a1a;
+  }
+}
+
+.fieldError {
+  color: #dc2626;
+  font-size: 0.8rem;
+}
