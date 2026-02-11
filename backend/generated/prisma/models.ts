@@ -10,4 +10,5 @@
  */
 export type * from './models/User'
 export type * from './models/DeclaracionAduanera'
+export type * from './models/PartidaArancelaria'
 export type * from './commonInputTypes'

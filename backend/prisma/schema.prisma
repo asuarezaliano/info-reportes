@@ -75,4 +75,15 @@ model DeclaracionAduanera {
   @@index([fecha_reg])
   @@index([partida_ar])
   @@index([depto_des])
+  @@index([fecha_reci])
+}
+
+model PartidaArancelaria {
+  codigo      String   @id              // ej: "3004.90.29"
+  capitulo    String                     // primeros 2 dígitos: "30"
+  descripcion String                     // descripción del producto
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([capitulo])
 }

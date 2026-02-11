@@ -52,7 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
-  DeclaracionAduanera: 'DeclaracionAduanera'
+  DeclaracionAduanera: 'DeclaracionAduanera',
+  PartidaArancelaria: 'PartidaArancelaria'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -125,6 +126,17 @@ export const DeclaracionAduaneraScalarFieldEnum = {
 } as const
 
 export type DeclaracionAduaneraScalarFieldEnum = (typeof DeclaracionAduaneraScalarFieldEnum)[keyof typeof DeclaracionAduaneraScalarFieldEnum]
+
+
+export const PartidaArancelariaScalarFieldEnum = {
+  codigo: 'codigo',
+  capitulo: 'capitulo',
+  descripcion: 'descripcion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PartidaArancelariaScalarFieldEnum = (typeof PartidaArancelariaScalarFieldEnum)[keyof typeof PartidaArancelariaScalarFieldEnum]
 
 
 export const SortOrder = {

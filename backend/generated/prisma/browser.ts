@@ -27,3 +27,8 @@ export type User = Prisma.UserModel
  * 
  */
 export type DeclaracionAduanera = Prisma.DeclaracionAduaneraModel
+/**
+ * Model PartidaArancelaria
+ * 
+ */
+export type PartidaArancelaria = Prisma.PartidaArancelariaModel

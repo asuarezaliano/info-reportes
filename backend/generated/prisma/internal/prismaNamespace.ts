@@ -385,7 +385,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
-  DeclaracionAduanera: 'DeclaracionAduanera'
+  DeclaracionAduanera: 'DeclaracionAduanera',
+  PartidaArancelaria: 'PartidaArancelaria'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -401,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "declaracionAduanera"
+    modelProps: "user" | "declaracionAduanera" | "partidaArancelaria"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -553,6 +554,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PartidaArancelaria: {
+      payload: Prisma.$PartidaArancelariaPayload<ExtArgs>
+      fields: Prisma.PartidaArancelariaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PartidaArancelariaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PartidaArancelariaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>
+        }
+        findFirst: {
+          args: Prisma.PartidaArancelariaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PartidaArancelariaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>
+        }
+        findMany: {
+          args: Prisma.PartidaArancelariaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>[]
+        }
+        create: {
+          args: Prisma.PartidaArancelariaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>
+        }
+        createMany: {
+          args: Prisma.PartidaArancelariaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PartidaArancelariaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>[]
+        }
+        delete: {
+          args: Prisma.PartidaArancelariaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>
+        }
+        update: {
+          args: Prisma.PartidaArancelariaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>
+        }
+        deleteMany: {
+          args: Prisma.PartidaArancelariaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PartidaArancelariaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PartidaArancelariaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>[]
+        }
+        upsert: {
+          args: Prisma.PartidaArancelariaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartidaArancelariaPayload>
+        }
+        aggregate: {
+          args: Prisma.PartidaArancelariaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePartidaArancelaria>
+        }
+        groupBy: {
+          args: Prisma.PartidaArancelariaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PartidaArancelariaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PartidaArancelariaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PartidaArancelariaCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -646,6 +721,17 @@ export const DeclaracionAduaneraScalarFieldEnum = {
 } as const
 
 export type DeclaracionAduaneraScalarFieldEnum = (typeof DeclaracionAduaneraScalarFieldEnum)[keyof typeof DeclaracionAduaneraScalarFieldEnum]
+
+
+export const PartidaArancelariaScalarFieldEnum = {
+  codigo: 'codigo',
+  capitulo: 'capitulo',
+  descripcion: 'descripcion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PartidaArancelariaScalarFieldEnum = (typeof PartidaArancelariaScalarFieldEnum)[keyof typeof PartidaArancelariaScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -875,6 +961,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   declaracionAduanera?: Prisma.DeclaracionAduaneraOmit
+  partidaArancelaria?: Prisma.PartidaArancelariaOmit
 }
 
 /* Types for Logging */

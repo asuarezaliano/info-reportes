@@ -373,11 +373,41 @@
   border: 1px solid var(--border);
 }
 
-.desc {
+.descCell {
   max-width: 200px;
+  position: relative;
+}
+
+.descText {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: default;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 100;
+  background: var(--header-bg);
+  color: #fff;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 250px;
+  max-width: 450px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.descText:hover .tooltip {
+  display: block;
 }
 
 /* ── Pagination ── */
@@ -446,4 +476,49 @@
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--accent);
+}
+
+/* ── Charts ── */
+.chartRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1000px) {
+  .chartRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chartCard {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.chartCard h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin-bottom: 1rem;
+}
+
+.chartCardFull {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.chartCardFull h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin-bottom: 1rem;
 }

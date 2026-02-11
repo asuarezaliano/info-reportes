@@ -71,6 +71,7 @@ export type Declaracion = {
   mes: string | null;
   canal: string | null;
   fecha_reg: string | null;
+  fecha_reci: string | null;
   [key: string]: unknown;
 };
 
@@ -108,6 +109,20 @@ export async function getFilterOptions(): Promise<FilterOptions> {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("Error al cargar opciones de filtros");
+  return res.json();
+}
+
+export type SubPartida = {
+  codigo: string;
+  descripcion: string;
+};
+
+export async function getSubPartidas(capitulo: string): Promise<SubPartida[]> {
+  const res = await fetch(
+    `${API_URL}/declaraciones/filtros/sub-partidas?capitulo=${capitulo}`,
+    { headers: getAuthHeaders() }
+  );
+  if (!res.ok) throw new Error("Error al cargar sub-partidas");
   return res.json();
 }
 
@@ -202,5 +217,36 @@ export async function resumenGeneral(
   );
 
   if (!res.ok) throw new Error("Error al cargar resumen");
+  return res.json();
+}
+
+export type EvolucionMensual = {
+  mes: string;
+  totalCif: number;
+  totalFob: number;
+  registros: number;
+};
+
+export async function evolucionMensual(): Promise<EvolucionMensual[]> {
+  const res = await fetch(`${API_URL}/declaraciones/reportes/evolucion-mensual`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Error al cargar evolución mensual");
+  return res.json();
+}
+
+export type TopCategoria = {
+  capitulo: string;
+  totalCif: number;
+  totalFob: number;
+  registros: number;
+};
+
+export async function topCategorias(limit = 8): Promise<TopCategoria[]> {
+  const res = await fetch(
+    `${API_URL}/declaraciones/reportes/top-categorias?limit=${limit}`,
+    { headers: getAuthHeaders() }
+  );
+  if (!res.ok) throw new Error("Error al cargar categorías");
   return res.json();
 }

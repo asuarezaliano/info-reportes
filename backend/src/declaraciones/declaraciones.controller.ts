@@ -114,6 +114,17 @@ export class DeclaracionesController {
     return this.declaracionesService.getFilterOptions();
   }
 
+  @Get('filtros/sub-partidas')
+  async getSubPartidas(@Query('capitulo') capitulo: string) {
+    if (!capitulo || capitulo.length !== 2) return [];
+    return this.declaracionesService.getSubPartidas(capitulo);
+  }
+
+  @Post('catalogo/sync')
+  async syncCatalogo() {
+    return this.declaracionesService.syncCatalogo();
+  }
+
   @Get('reportes/por-pais')
   async reportePorPais(
     @Query('mes') mes?: string,
@@ -139,6 +150,18 @@ export class DeclaracionesController {
   @Get('reportes/por-departamento')
   async reportePorDepartamento(@Query('mes') mes?: string) {
     return this.declaracionesService.reportePorDepartamento({ mes });
+  }
+
+  @Get('reportes/evolucion-mensual')
+  async evolucionMensual() {
+    return this.declaracionesService.evolucionMensual();
+  }
+
+  @Get('reportes/top-categorias')
+  async topCategorias(@Query('limit') limit?: string) {
+    return this.declaracionesService.topCategorias(
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get('reportes/resumen')

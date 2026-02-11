@@ -8,6 +8,10 @@ import { closeSync, createReadStream, openSync, readFileSync, readSync } from 'n
 
 @Injectable()
 export class DeclaracionesService {
+  // In-memory cache for catalog queries
+  private catalogCache = new Map<string, { data: { codigo: string; descripcion: string }[]; timestamp: number }>();
+  private static CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
   constructor(private prisma: PrismaService) {}
 
   async importarArchivoDesdeDisco(
@@ -85,6 +89,11 @@ export class DeclaracionesService {
       } finally {
         rowNumber++;
       }
+    }
+
+    // Sync catalog after import
+    if (resultados.importados > 0) {
+      await this.syncCatalogo();
     }
 
     return resultados;
@@ -180,11 +189,62 @@ export class DeclaracionesService {
       }
     }
 
+    // Sync catalog after import
+    if (resultados.importados > 0) {
+      await this.syncCatalogo();
+    }
+
     return resultados;
   }
 
   async importarCSV(buffer: Buffer, delimiter = '\t') {
     return this.importarArchivo(buffer, 'csv', delimiter);
+  }
+
+  /**
+   * Sync the PartidaArancelaria catalog from existing declaraciones data.
+   * Uses raw SQL GROUP BY for efficiency with large datasets.
+   * Upserts: inserts new entries, updates description if changed.
+   */
+  async syncCatalogo() {
+    const partidas = await this.prisma.$queryRaw<
+      { partida_ar: string; descripcio: string }[]
+    >`
+      SELECT DISTINCT ON (partida_ar)
+        partida_ar, descripcio
+      FROM "DeclaracionAduanera"
+      WHERE partida_ar IS NOT NULL AND descripcio IS NOT NULL
+      ORDER BY partida_ar, "createdAt" DESC
+    `;
+
+    let added = 0;
+    let updated = 0;
+
+    for (const p of partidas) {
+      const capitulo = p.partida_ar.replace(/\D/g, '').slice(0, 2).padStart(2, '0');
+      const result = await this.prisma.partidaArancelaria.upsert({
+        where: { codigo: p.partida_ar },
+        create: {
+          codigo: p.partida_ar,
+          capitulo,
+          descripcion: p.descripcio,
+        },
+        update: {
+          descripcion: p.descripcio,
+          capitulo,
+        },
+      });
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        added++;
+      } else {
+        updated++;
+      }
+    }
+
+    // Clear cache after sync
+    this.catalogCache.clear();
+
+    return { total: partidas.length, added, updated };
   }
 
   private mapearFila(row: Record<string, string>): Prisma.DeclaracionAduaneraCreateInput | null {
@@ -316,7 +376,7 @@ export class DeclaracionesService {
     if (filtros.importador) where.importador = { contains: filtros.importador, mode: 'insensitive' };
     if (filtros.proveedor) where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
     if (filtros.descripcion) where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
-    if (filtros.partida_ar) where.partida_ar = { contains: filtros.partida_ar, mode: 'insensitive' };
+    if (filtros.partida_ar) where.partida_ar = { startsWith: filtros.partida_ar };
     if (filtros.mes) where.mes = filtros.mes;
     if (filtros.depto_des) where.depto_des = filtros.depto_des;
 
@@ -384,6 +444,30 @@ export class DeclaracionesService {
       paises: paises.map((p) => p.pais_orige).filter(Boolean) as string[],
       departamentos: departamentos.map((d) => d.depto_des).filter(Boolean) as string[],
     };
+  }
+
+  async getSubPartidas(capitulo: string) {
+    // Check in-memory cache first
+    const cached = this.catalogCache.get(capitulo);
+    if (cached && Date.now() - cached.timestamp < DeclaracionesService.CACHE_TTL) {
+      return cached.data;
+    }
+
+    // Query the lightweight catalog table (indexed by capitulo)
+    const partidas = await this.prisma.partidaArancelaria.findMany({
+      where: { capitulo },
+      orderBy: { codigo: 'asc' },
+    });
+
+    const result = partidas.map((p) => ({
+      codigo: p.codigo,
+      descripcion: p.descripcion,
+    }));
+
+    // Store in cache
+    this.catalogCache.set(capitulo, { data: result, timestamp: Date.now() });
+
+    return result;
   }
 
   async reportePorPais(filtros?: { mes?: string; anio?: number }) {
@@ -474,5 +558,80 @@ export class DeclaracionesService {
       totalFob: Number(agregados._sum.fob ?? 0),
       totalCantidad: Number(agregados._sum.cantidad ?? 0),
     };
+  }
+
+  /**
+   * Monthly evolution of CIF and FOB values
+   */
+  async evolucionMensual() {
+    const result = await this.prisma.declaracionAduanera.groupBy({
+      by: ['mes'],
+      where: { mes: { not: null } },
+      _sum: { cif_item: true, fob: true },
+      _count: true,
+    });
+
+    return result
+      .filter((r) => r.mes)
+      .map((r) => ({
+        mes: r.mes,
+        totalCif: Number(r._sum.cif_item ?? 0),
+        totalFob: Number(r._sum.fob ?? 0),
+        registros: r._count,
+      }))
+      .sort((a, b) => {
+        // Sort by year then month: format is like "OCT25", "ENE26"
+        const meses: Record<string, number> = {
+          ENE: 1, FEB: 2, MAR: 3, ABR: 4, MAY: 5, JUN: 6,
+          JUL: 7, AGO: 8, SEP: 9, OCT: 10, NOV: 11, DIC: 12,
+        };
+        const parseMs = (m: string | null) => {
+          if (!m) return 0;
+          const mes = m.slice(0, 3).toUpperCase();
+          const anio = parseInt(m.slice(3), 10) || 0;
+          return anio * 100 + (meses[mes] ?? 0);
+        };
+        return parseMs(a.mes) - parseMs(b.mes);
+      });
+  }
+
+  /**
+   * Top categories by CIF (using first 2 digits of partida_ar)
+   */
+  async topCategorias(limit = 8) {
+    const result = await this.prisma.$queryRaw<
+      { capitulo: string; total_cif: number; total_fob: number; registros: bigint }[]
+    >`
+      SELECT
+        LEFT(REGEXP_REPLACE(partida_ar, '[^0-9]', '', 'g'), 2) AS capitulo,
+        SUM(cif_item) AS total_cif,
+        SUM(fob) AS total_fob,
+        COUNT(*) AS registros
+      FROM "DeclaracionAduanera"
+      WHERE partida_ar IS NOT NULL
+      GROUP BY capitulo
+      ORDER BY total_cif DESC
+      LIMIT ${limit + 1}
+    `;
+
+    // Take top N and group the rest as "Otros"
+    const top = result.slice(0, limit).map((r) => ({
+      capitulo: r.capitulo,
+      totalCif: Number(r.total_cif ?? 0),
+      totalFob: Number(r.total_fob ?? 0),
+      registros: Number(r.registros),
+    }));
+
+    if (result.length > limit) {
+      const otros = result.slice(limit);
+      top.push({
+        capitulo: '99',
+        totalCif: otros.reduce((s, r) => s + Number(r.total_cif ?? 0), 0),
+        totalFob: otros.reduce((s, r) => s + Number(r.total_fob ?? 0), 0),
+        registros: otros.reduce((s, r) => s + Number(r.registros), 0),
+      });
+    }
+
+    return top;
   }
 }
