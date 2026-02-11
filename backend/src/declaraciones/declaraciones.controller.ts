@@ -129,29 +129,37 @@ export class DeclaracionesController {
 
   @Get('reportes/por-pais')
   async reportePorPais(
-    @Query('mes') mes?: string,
-    @Query('anio') anio?: string,
+    @Query('fechaDesde') fechaDesde?: string,
+    @Query('fechaHasta') fechaHasta?: string,
   ) {
     return this.declaracionesService.reportePorPais({
-      mes,
-      anio: anio ? parseInt(anio, 10) : undefined,
+      fechaDesde: fechaDesde ? new Date(fechaDesde) : undefined,
+      fechaHasta: fechaHasta ? new Date(fechaHasta) : undefined,
     });
   }
 
   @Get('reportes/por-importador')
   async reportePorImportador(
-    @Query('mes') mes?: string,
+    @Query('fechaDesde') fechaDesde?: string,
+    @Query('fechaHasta') fechaHasta?: string,
     @Query('limit') limit?: string,
   ) {
     return this.declaracionesService.reportePorImportador({
-      mes,
+      fechaDesde: fechaDesde ? new Date(fechaDesde) : undefined,
+      fechaHasta: fechaHasta ? new Date(fechaHasta) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
   }
 
   @Get('reportes/por-departamento')
-  async reportePorDepartamento(@Query('mes') mes?: string) {
-    return this.declaracionesService.reportePorDepartamento({ mes });
+  async reportePorDepartamento(
+    @Query('fechaDesde') fechaDesde?: string,
+    @Query('fechaHasta') fechaHasta?: string,
+  ) {
+    return this.declaracionesService.reportePorDepartamento({
+      fechaDesde: fechaDesde ? new Date(fechaDesde) : undefined,
+      fechaHasta: fechaHasta ? new Date(fechaHasta) : undefined,
+    });
   }
 
   @Get('reportes/evolucion-mensual')
@@ -168,12 +176,12 @@ export class DeclaracionesController {
 
   @Get('reportes/resumen')
   async resumenGeneral(
-    @Query('mes') mes?: string,
-    @Query('anio') anio?: string,
+    @Query('fechaDesde') fechaDesde?: string,
+    @Query('fechaHasta') fechaHasta?: string,
   ) {
     return this.declaracionesService.resumenGeneral({
-      mes,
-      anio: anio ? parseInt(anio, 10) : undefined,
+      fechaDesde: fechaDesde ? new Date(fechaDesde) : undefined,
+      fechaHasta: fechaHasta ? new Date(fechaHasta) : undefined,
     });
   }
 

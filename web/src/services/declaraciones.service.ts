@@ -138,12 +138,12 @@ export type ReportePais = {
 };
 
 export async function reportePorPais(
-  mes?: string,
-  anio?: number
+  fechaDesde?: string,
+  fechaHasta?: string
 ): Promise<ReportePais[]> {
   const params = new URLSearchParams();
-  if (mes) params.set("mes", mes);
-  if (anio) params.set("anio", String(anio));
+  if (fechaDesde) params.set("fechaDesde", fechaDesde);
+  if (fechaHasta) params.set("fechaHasta", fechaHasta);
 
   const res = await fetch(
     `${API_URL}/declaraciones/reportes/por-pais?${params}`,
@@ -163,11 +163,13 @@ export type ReporteImportador = {
 };
 
 export async function reportePorImportador(
-  mes?: string,
+  fechaDesde?: string,
+  fechaHasta?: string,
   limit?: number
 ): Promise<ReporteImportador[]> {
   const params = new URLSearchParams();
-  if (mes) params.set("mes", mes);
+  if (fechaDesde) params.set("fechaDesde", fechaDesde);
+  if (fechaHasta) params.set("fechaHasta", fechaHasta);
   if (limit) params.set("limit", String(limit));
 
   const res = await fetch(
@@ -187,11 +189,15 @@ export type ReporteDepartamento = {
 };
 
 export async function reportePorDepartamento(
-  mes?: string
+  fechaDesde?: string,
+  fechaHasta?: string
 ): Promise<ReporteDepartamento[]> {
-  const params = mes ? `?mes=${mes}` : "";
+  const params = new URLSearchParams();
+  if (fechaDesde) params.set("fechaDesde", fechaDesde);
+  if (fechaHasta) params.set("fechaHasta", fechaHasta);
+
   const res = await fetch(
-    `${API_URL}/declaraciones/reportes/por-departamento${params}`,
+    `${API_URL}/declaraciones/reportes/por-departamento?${params}`,
     { headers: getAuthHeaders() }
   );
 
@@ -207,12 +213,12 @@ export type ResumenGeneral = {
 };
 
 export async function resumenGeneral(
-  mes?: string,
-  anio?: number
+  fechaDesde?: string,
+  fechaHasta?: string
 ): Promise<ResumenGeneral> {
   const params = new URLSearchParams();
-  if (mes) params.set("mes", mes);
-  if (anio) params.set("anio", String(anio));
+  if (fechaDesde) params.set("fechaDesde", fechaDesde);
+  if (fechaHasta) params.set("fechaHasta", fechaHasta);
 
   const res = await fetch(
     `${API_URL}/declaraciones/reportes/resumen?${params}`,

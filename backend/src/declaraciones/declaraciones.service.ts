@@ -475,10 +475,18 @@ export class DeclaracionesService {
     return result;
   }
 
-  async reportePorPais(filtros?: { mes?: string; anio?: number }) {
+  private buildDateFilter(fechaDesde?: Date, fechaHasta?: Date): Prisma.DeclaracionAduaneraWhereInput {
     const where: Prisma.DeclaracionAduaneraWhereInput = {};
-    if (filtros?.mes) where.mes = filtros.mes;
-    if (filtros?.anio) where.anio = filtros.anio;
+    if (fechaDesde || fechaHasta) {
+      where.fecha_reci = {};
+      if (fechaDesde) (where.fecha_reci as Prisma.DateTimeFilter).gte = fechaDesde;
+      if (fechaHasta) (where.fecha_reci as Prisma.DateTimeFilter).lte = fechaHasta;
+    }
+    return where;
+  }
+
+  async reportePorPais(filtros?: { fechaDesde?: Date; fechaHasta?: Date }) {
+    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
 
     const result = await this.prisma.declaracionAduanera.groupBy({
       by: ['pais_orige'],
@@ -499,9 +507,8 @@ export class DeclaracionesService {
       .sort((a, b) => b.totalCif - a.totalCif);
   }
 
-  async reportePorImportador(filtros?: { mes?: string; limit?: number }) {
-    const where: Prisma.DeclaracionAduaneraWhereInput = {};
-    if (filtros?.mes) where.mes = filtros.mes;
+  async reportePorImportador(filtros?: { fechaDesde?: Date; fechaHasta?: Date; limit?: number }) {
+    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
 
     const result = await this.prisma.declaracionAduanera.groupBy({
       by: ['importador', 'nit_desp'],
@@ -522,9 +529,8 @@ export class DeclaracionesService {
       .sort((a, b) => b.totalCif - a.totalCif);
   }
 
-  async reportePorDepartamento(filtros?: { mes?: string }) {
-    const where: Prisma.DeclaracionAduaneraWhereInput = {};
-    if (filtros?.mes) where.mes = filtros.mes;
+  async reportePorDepartamento(filtros?: { fechaDesde?: Date; fechaHasta?: Date }) {
+    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
 
     const result = await this.prisma.declaracionAduanera.groupBy({
       by: ['depto_des'],
@@ -544,10 +550,8 @@ export class DeclaracionesService {
       .sort((a, b) => b.totalCif - a.totalCif);
   }
 
-  async resumenGeneral(filtros?: { mes?: string; anio?: number }) {
-    const where: Prisma.DeclaracionAduaneraWhereInput = {};
-    if (filtros?.mes) where.mes = filtros.mes;
-    if (filtros?.anio) where.anio = filtros.anio;
+  async resumenGeneral(filtros?: { fechaDesde?: Date; fechaHasta?: Date }) {
+    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
 
     const [agregados, totalRegistros] = await Promise.all([
       this.prisma.declaracionAduanera.aggregate({

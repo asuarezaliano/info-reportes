@@ -1,0 +1,52 @@
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Chart Layout                                            ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.chartRowFull {
+  margin-bottom: 1.5rem;
+}
+
+.chartRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .chartRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Chart Cards                                             ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.chartCard {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.chartCard h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin-bottom: 1rem;
+}
+
+.chartCardWide {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.chartCardWide h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin-bottom: 1rem;
+}

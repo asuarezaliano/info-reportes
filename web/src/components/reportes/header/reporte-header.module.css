@@ -1,0 +1,176 @@
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Report Filter Bar                                       ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.reportFilterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.reportFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reportFilterGroup label {
+  font-weight: 600;
+  color: var(--header-bg);
+  font-size: 0.9rem;
+}
+
+.datePickerGroup {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.datePickerItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.datePickerItem span {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.dateInput {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: var(--background);
+  color: var(--foreground);
+  min-width: 150px;
+  transition: all 0.2s ease;
+}
+
+.dateInput:hover {
+  border-color: var(--primary);
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btnPrimary {
+  padding: 0.6rem 1.2rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btnPrimary:hover {
+  background: var(--primary-dark, #1e40af);
+}
+
+.btnSecondary {
+  padding: 0.6rem 1.2rem;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btnSecondary:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary);
+}
+
+.filterBadge {
+  background: var(--primary);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Summary Cards                                           ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.resumen {
+  margin-bottom: 1.5rem;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cardLarge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.cardLarge:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+.cardIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardContent span {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.cardContent strong {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin-top: 0.15rem;
+}

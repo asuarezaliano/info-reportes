@@ -1,0 +1,193 @@
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Report Section                                          ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.reportes {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.reportHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.reportHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Report Tabs                                             ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.reportTabGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reportTab {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reportTab:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.btnActive {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.btnActive:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.reportCount {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Report Table                                            ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.tablaReporte {
+  overflow-x: auto;
+}
+
+.tablaReporte table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.tablaReporte thead {
+  background: var(--primary);
+  color: white;
+}
+
+.tablaReporte th {
+  padding: 0.75rem 0.6rem;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tablaReporte tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+
+.tablaReporte tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+.tablaReporte td {
+  padding: 0.65rem 0.6rem;
+  color: var(--foreground);
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  text-decoration: underline;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Progress Bar                                            ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.progressBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.progressBar > div:first-child {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #60a5fa);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progressBar span {
+  font-size: 0.75rem;
+  color: var(--muted);
+  min-width: 45px;
+  text-align: right;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* ═══ Pagination                                              ═══ */
+/* ══════════════════════════════════════════════════════════════ */
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.paginacion button {
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.paginacion button:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.paginacion button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.paginacion span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
