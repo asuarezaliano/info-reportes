@@ -60,10 +60,13 @@ export type Declaracion = {
   partida_ar: string | null;
   descripcio: string | null;
   pais_orige: string | null;
+  pais_pro: string | null;
   cantidad: number | null;
   acuerdo_co: string | null;
   cif_item: number | null;
   fob: number | null;
+  p_neto: number | null;
+  p_bruto: number | null;
   importador: string | null;
   despachant: string | null;
   proveedor: string | null;
@@ -249,4 +252,45 @@ export async function topCategorias(limit = 8): Promise<TopCategoria[]> {
   );
   if (!res.ok) throw new Error("Error al cargar categorías");
   return res.json();
+}
+
+export async function exportarReporteExcel(
+  filtros: FiltrosBusqueda
+): Promise<void> {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([k, v]) => {
+    if (v != null && v !== "" && k !== "limit" && k !== "offset" && k !== "sortBy" && k !== "sortDir") {
+      params.set(k, String(v));
+    }
+  });
+
+  const res = await fetch(
+    `${API_URL}/declaraciones/reportes/exportar-excel?${params.toString()}`,
+    { headers: getAuthHeaders() }
+  );
+
+  if (!res.ok) {
+    throw new Error("Error al generar el reporte");
+  }
+
+  // Get filename from Content-Disposition header
+  const contentDisposition = res.headers.get("Content-Disposition");
+  let filename = "reporte.xlsx";
+  if (contentDisposition) {
+    const match = contentDisposition.match(/filename="?([^"]+)"?/);
+    if (match) {
+      filename = decodeURIComponent(match[1]);
+    }
+  }
+
+  // Download the file
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 }

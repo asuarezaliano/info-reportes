@@ -3,11 +3,13 @@ import {
   Post,
   Get,
   Query,
+  Res,
   UseInterceptors,
   UploadedFile,
   ParseFilePipe,
   MaxFileSizeValidator,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DeclaracionesService } from './declaraciones.service';
 import { diskStorage } from 'multer';
@@ -173,5 +175,44 @@ export class DeclaracionesController {
       mes,
       anio: anio ? parseInt(anio, 10) : undefined,
     });
+  }
+
+  @Get('reportes/exportar-excel')
+  async exportarExcel(
+    @Res() res: Response,
+    @Query('pais_orige') pais_orige?: string,
+    @Query('importador') importador?: string,
+    @Query('proveedor') proveedor?: string,
+    @Query('descripcion') descripcion?: string,
+    @Query('partida_ar') partida_ar?: string,
+    @Query('mes') mes?: string,
+    @Query('depto_des') depto_des?: string,
+    @Query('fecha_desde') fecha_desde?: string,
+    @Query('fecha_hasta') fecha_hasta?: string,
+  ) {
+    const filtros = {
+      pais_orige,
+      importador,
+      proveedor,
+      descripcion,
+      partida_ar,
+      mes,
+      depto_des,
+      fecha_desde: fecha_desde ? new Date(fecha_desde) : undefined,
+      fecha_hasta: fecha_hasta ? new Date(fecha_hasta) : undefined,
+    };
+
+    const buffer = await this.declaracionesService.generarReporteExcel(filtros);
+    const filename = this.declaracionesService.buildReportFilename(filtros);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${encodeURIComponent(filename)}"`,
+    );
+    res.send(buffer);
   }
 }

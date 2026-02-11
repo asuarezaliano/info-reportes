@@ -181,6 +181,33 @@
   background: var(--border);
 }
 
+.btnExport {
+  padding: 0.55rem 1.25rem;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btnExport:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+  transform: translateY(-1px);
+}
+
+.btnExport:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btnActive {
   background: var(--primary) !important;
   color: white !important;
@@ -521,4 +548,403 @@
   font-weight: 700;
   color: var(--header-bg);
   margin-bottom: 1rem;
+}
+
+/* ── Report Filter Bar ── */
+.reportFilterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.reportFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reportFilterGroup label {
+  font-weight: 600;
+  color: var(--header-bg);
+  font-size: 0.9rem;
+}
+
+.filterBadge {
+  background: var(--primary);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ── Cards Grid (6 cards) ── */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cardLarge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cardLarge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cardIcon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardContent span {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.cardContent strong {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--header-bg);
+}
+
+/* ── Chart Row Full Width ── */
+.chartRowFull {
+  margin-bottom: 1.5rem;
+}
+
+.chartCardWide {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.chartCardWide h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin-bottom: 1rem;
+}
+
+/* ── Report Header ── */
+.reportHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reportHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin: 0;
+}
+
+/* ── Progress Bar in Tables ── */
+.progressBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.progressBar > div:first-child {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #1E40AF, #3B82F6);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progressBar span {
+  font-size: 0.75rem;
+  color: var(--muted);
+  min-width: 45px;
+  text-align: right;
+}
+
+/* ══════════════════════════════════════ */
+/* ── Reporte Visual en Búsqueda       ── */
+/* ══════════════════════════════════════ */
+.reporteVisual {
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+}
+
+.reporteVisual .reporteHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.reporteVisual .reporteHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin: 0;
+}
+
+.filtrosAplicados {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.filtrosLabel {
+  font-weight: 600;
+  color: var(--header-bg);
+  font-size: 0.85rem;
+  margin-right: 0.5rem;
+}
+
+.filterTag {
+  background: var(--primary);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.reporteCards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .reporteCards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .reporteCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.reporteCard {
+  background: linear-gradient(135deg, var(--primary) 0%, #2563EB 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reporteCard span {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.reporteCard strong {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.reporteTables {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .reporteTables {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reporteTable {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.reporteTable h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin: 0 0 1rem 0;
+}
+
+.reporteTable .tableWrapper {
+  max-height: 400px;
+}
+
+/* Tabs del reporte visual */
+.reporteTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+
+.reporteTabBtn {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.reporteTabBtn:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.reporteTabActive {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.reporteTabContent {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.reporteTabContent h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin: 0 0 1rem 0;
+}
+
+.reporteTabContent .tableWrapper {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.numericCell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Filtros del reporte */
+.filtrosReporte {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.filtrosReporte h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-light);
+}
+
+.filtrosGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .filtrosGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .filtrosGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filtroItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.filtroLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filtroValue {
+  font-size: 0.9rem;
+  color: var(--foreground);
+  word-break: break-word;
 }

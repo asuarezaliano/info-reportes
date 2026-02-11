@@ -1,0 +1,176 @@
+/* ── Section Container ── */
+.datos {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.datos h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--header-bg);
+  margin-bottom: 1.25rem;
+}
+
+.loading {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* ── Table ── */
+.tablaDatos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.tablaDatos th,
+.tablaDatos td {
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.tablaDatos th {
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--header-bg);
+  color: var(--header-text);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.sortable:hover {
+  background: #1E3A8A !important;
+}
+
+.tablaDatos tbody tr:hover {
+  background: var(--primary-light);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  max-height: 700px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* ── Description Cell with Tooltip ── */
+.descCell {
+  max-width: 200px;
+  position: relative;
+}
+
+.descText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 100;
+  background: var(--header-bg);
+  color: #fff;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 250px;
+  max-width: 450px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.descText:hover .tooltip {
+  display: block;
+}
+
+/* ── Summary Bar ── */
+.summaryBar {
+  display: flex;
+  gap: 2.5rem;
+  margin-top: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.summaryLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.summaryValue {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* ── Pagination ── */
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.paginacion button {
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.15s;
+}
+
+.paginacion button:hover:not(:disabled) {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.paginacion button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paginacion span {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 500;
+}

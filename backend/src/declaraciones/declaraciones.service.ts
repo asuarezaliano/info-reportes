@@ -258,7 +258,12 @@ export class DeclaracionesService {
       if (!val || val.trim() === '') return null;
       const [d, m, y] = val.split('/');
       if (!d || !m || !y) return null;
-      const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      let year = parseInt(y, 10);
+      // Handle 2-digit years: assume 2000s for years < 100
+      if (year < 100) {
+        year = year >= 50 ? 1900 + year : 2000 + year;
+      }
+      const date = new Date(year, parseInt(m) - 1, parseInt(d));
       return isNaN(date.getTime()) ? null : date;
     };
 
@@ -633,5 +638,419 @@ export class DeclaracionesService {
     }
 
     return top;
+  }
+
+  /**
+   * Generate Excel report with multiple sheets based on filters
+   */
+  async generarReporteExcel(filtros: {
+    pais_orige?: string;
+    importador?: string;
+    proveedor?: string;
+    descripcion?: string;
+    partida_ar?: string;
+    mes?: string;
+    depto_des?: string;
+    fecha_desde?: Date;
+    fecha_hasta?: Date;
+  }): Promise<Buffer> {
+    const where: Prisma.DeclaracionAduaneraWhereInput = {};
+
+    if (filtros.pais_orige) {
+      const paises = filtros.pais_orige.split(',').map((p) => p.trim()).filter(Boolean);
+      if (paises.length === 1) {
+        where.pais_orige = { contains: paises[0], mode: 'insensitive' };
+      } else if (paises.length > 1) {
+        where.pais_orige = { in: paises };
+      }
+    }
+    if (filtros.importador) where.importador = { contains: filtros.importador, mode: 'insensitive' };
+    if (filtros.proveedor) where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
+    if (filtros.descripcion) where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
+    if (filtros.partida_ar) where.partida_ar = { startsWith: filtros.partida_ar };
+    if (filtros.mes) where.mes = filtros.mes;
+    if (filtros.depto_des) where.depto_des = filtros.depto_des;
+
+    if (filtros.fecha_desde || filtros.fecha_hasta) {
+      where.fecha_reci = {};
+      if (filtros.fecha_desde) (where.fecha_reci as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
+      if (filtros.fecha_hasta) (where.fecha_reci as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
+    }
+
+    // Fetch all data needed for the report in parallel
+    const [
+      declaraciones,
+      resumen,
+      porMes,
+      porImportador,
+      porProveedor,
+      porPaisOrigen,
+      porPaisProcedencia,
+      porPartida,
+    ] = await Promise.all([
+      // Detalle completo (limit to 10000 for performance)
+      this.prisma.declaracionAduanera.findMany({
+        where,
+        take: 10000,
+        orderBy: { fecha_reci: 'desc' },
+      }),
+      // Resumen general
+      this.prisma.declaracionAduanera.aggregate({
+        where,
+        _sum: { cif_item: true, fob: true, p_neto: true, p_bruto: true },
+        _count: true,
+      }),
+      // Por mes
+      this.prisma.declaracionAduanera.groupBy({
+        by: ['mes'],
+        where: { ...where, mes: { not: null } },
+        _sum: { cif_item: true, fob: true, p_neto: true },
+        _count: true,
+      }),
+      // Por importador
+      this.prisma.declaracionAduanera.groupBy({
+        by: ['importador'],
+        where: { ...where, importador: { not: null } },
+        _sum: { cif_item: true, fob: true, p_neto: true },
+        _count: true,
+      }),
+      // Por proveedor
+      this.prisma.declaracionAduanera.groupBy({
+        by: ['proveedor', 'pais_orige'],
+        where: { ...where, proveedor: { not: null } },
+        _sum: { cif_item: true, fob: true, p_neto: true },
+        _count: true,
+      }),
+      // Por país de origen
+      this.prisma.declaracionAduanera.groupBy({
+        by: ['pais_orige'],
+        where: { ...where, pais_orige: { not: null } },
+        _sum: { cif_item: true, fob: true, p_neto: true },
+        _count: true,
+      }),
+      // Por país de procedencia
+      this.prisma.declaracionAduanera.groupBy({
+        by: ['pais_pro'],
+        where: { ...where, pais_pro: { not: null } },
+        _sum: { cif_item: true, fob: true, p_neto: true },
+        _count: true,
+      }),
+      // Por partida arancelaria
+      this.prisma.declaracionAduanera.groupBy({
+        by: ['partida_ar', 'descripcio'],
+        where: { ...where, partida_ar: { not: null } },
+        _sum: { cif_item: true, fob: true, p_neto: true },
+        _count: true,
+      }),
+    ]);
+
+    // Calculate totals for percentages
+    const totalCif = Number(resumen._sum.cif_item ?? 0);
+    const totalPesoNeto = Number(resumen._sum.p_neto ?? 0);
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+
+    // Helper to format numbers (accepts Decimal from Prisma)
+    const fmt = (n: unknown) => n != null ? Number(n) : 0;
+    const pct = (n: number) => totalCif > 0 ? ((n / totalCif) * 100).toFixed(2) + '%' : '0%';
+
+    // Build filter description for headers
+    const filterDesc = this.buildFilterDescription(filtros);
+    const periodo = this.buildPeriodoDescription(filtros);
+
+    // 1. ÍNDICE sheet
+    const indiceData = [
+      ['Índice de Reportes'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['', 'Haga click en los links debajo para ir directo al Reporte'],
+      [''],
+      ['', 'Montos', 'Montos importados cada mes'],
+      ['', 'Posiciones', 'Listado de Posiciones importadas'],
+      ['', 'Importadores', 'Listado de Importadores'],
+      ['', 'Proveedores', 'Listado de Proveedores'],
+      ['', 'Países de Origen', 'Origen de los productos importados'],
+      ['', 'Países de Procedencia', 'Listado de Procedencias'],
+      ['', 'Detalle Completo', 'Detalles de Operaciones'],
+    ];
+    const wsIndice = XLSX.utils.aoa_to_sheet(indiceData);
+    XLSX.utils.book_append_sheet(workbook, wsIndice, 'Índice');
+
+    // 2. MONTOS sheet (por mes)
+    const montosHeader = [
+      ['Reporte de Importaciones - Montos'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['[Ir al Índice]'],
+      [''],
+      ['Mes', 'Monto (USD)', 'Peso Neto', '%Monto'],
+    ];
+    const montosData = porMes
+      .filter((r) => r.mes)
+      .map((r) => [
+        r.mes,
+        fmt(r._sum.cif_item),
+        fmt(r._sum.p_neto),
+        pct(fmt(r._sum.cif_item)),
+      ])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    montosData.push(['Total', totalCif, totalPesoNeto, '100%']);
+    const wsMontosData = [...montosHeader, ...montosData];
+    const wsMontos = XLSX.utils.aoa_to_sheet(wsMontosData);
+    XLSX.utils.book_append_sheet(workbook, wsMontos, 'Montos');
+
+    // 3. POSICIONES sheet (por partida)
+    const posicionesHeader = [
+      ['Reporte de Importaciones - Posiciones'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['[Ir al Índice]'],
+      [''],
+      ['Posición', 'Producto', 'Monto (USD)', 'Peso Neto', '%Monto'],
+    ];
+    const posicionesData = porPartida
+      .filter((r) => r.partida_ar)
+      .map((r) => [
+        r.partida_ar,
+        r.descripcio,
+        fmt(r._sum.cif_item),
+        fmt(r._sum.p_neto),
+        pct(fmt(r._sum.cif_item)),
+      ])
+      .sort((a, b) => Number(b[2]) - Number(a[2]));
+    posicionesData.push(['Total', '', totalCif, totalPesoNeto, '100%']);
+    const wsPosicionesData = [...posicionesHeader, ...posicionesData];
+    const wsPosiciones = XLSX.utils.aoa_to_sheet(wsPosicionesData);
+    XLSX.utils.book_append_sheet(workbook, wsPosiciones, 'Posiciones');
+
+    // 4. IMPORTADORES sheet
+    const importadoresHeader = [
+      ['Reporte de Importaciones - Empresas'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['[Ir al Índice]'],
+      [''],
+      ['Importador', 'Monto (USD)', 'Peso Neto', '%Monto'],
+    ];
+    const importadoresData = porImportador
+      .filter((r) => r.importador)
+      .map((r) => [
+        r.importador,
+        fmt(r._sum.cif_item),
+        fmt(r._sum.p_neto),
+        pct(fmt(r._sum.cif_item)),
+      ])
+      .sort((a, b) => Number(b[1]) - Number(a[1]));
+    importadoresData.push(['Total', totalCif, totalPesoNeto, '100%']);
+    const wsImportadoresData = [...importadoresHeader, ...importadoresData];
+    const wsImportadores = XLSX.utils.aoa_to_sheet(wsImportadoresData);
+    XLSX.utils.book_append_sheet(workbook, wsImportadores, 'Importadores');
+
+    // 5. PROVEEDORES sheet
+    const proveedoresHeader = [
+      ['Reporte de Importaciones - Proveedores'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['[Ir al Índice]'],
+      [''],
+      ['Proveedor', 'País', 'Operaciones', 'Monto (USD)', 'Peso Neto', '%Monto'],
+    ];
+    const proveedoresData = porProveedor
+      .filter((r) => r.proveedor)
+      .map((r) => [
+        r.proveedor,
+        r.pais_orige ?? '',
+        r._count,
+        fmt(r._sum.cif_item),
+        fmt(r._sum.p_neto),
+        pct(fmt(r._sum.cif_item)),
+      ])
+      .sort((a, b) => Number(b[3]) - Number(a[3]));
+    proveedoresData.push(['Total', '', resumen._count, totalCif, totalPesoNeto, '100%']);
+    const wsProveedoresData = [...proveedoresHeader, ...proveedoresData];
+    const wsProveedores = XLSX.utils.aoa_to_sheet(wsProveedoresData);
+    XLSX.utils.book_append_sheet(workbook, wsProveedores, 'Proveedores');
+
+    // 6. PAÍSES DE ORIGEN sheet
+    const paisesOrigenHeader = [
+      ['Reporte de Importaciones - Países de Origen'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['[Ir al Índice]'],
+      [''],
+      ['País', 'Monto (USD)', 'Peso Neto', '%Monto'],
+    ];
+    const paisesOrigenData = porPaisOrigen
+      .filter((r) => r.pais_orige)
+      .map((r) => [
+        r.pais_orige,
+        fmt(r._sum.cif_item),
+        fmt(r._sum.p_neto),
+        pct(fmt(r._sum.cif_item)),
+      ])
+      .sort((a, b) => Number(b[1]) - Number(a[1]));
+    paisesOrigenData.push(['Total', totalCif, totalPesoNeto, '100%']);
+    const wsPaisesOrigenData = [...paisesOrigenHeader, ...paisesOrigenData];
+    const wsPaisesOrigen = XLSX.utils.aoa_to_sheet(wsPaisesOrigenData);
+    XLSX.utils.book_append_sheet(workbook, wsPaisesOrigen, 'Países de Origen');
+
+    // 7. PAÍSES DE PROCEDENCIA sheet
+    const paisesProcHeader = [
+      ['Reporte de Importaciones - Países de Procedencia'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['[Ir al Índice]'],
+      [''],
+      ['País', 'Monto (USD)', 'Peso Neto', '%Monto'],
+    ];
+    const paisesProcData = porPaisProcedencia
+      .filter((r) => r.pais_pro)
+      .map((r) => [
+        r.pais_pro,
+        fmt(r._sum.cif_item),
+        fmt(r._sum.p_neto),
+        pct(fmt(r._sum.cif_item)),
+      ])
+      .sort((a, b) => Number(b[1]) - Number(a[1]));
+    paisesProcData.push(['Total', totalCif, totalPesoNeto, '100%']);
+    const wsPaisesProcData = [...paisesProcHeader, ...paisesProcData];
+    const wsPaisesProc = XLSX.utils.aoa_to_sheet(wsPaisesProcData);
+    XLSX.utils.book_append_sheet(workbook, wsPaisesProc, 'Países Procedencia');
+
+    // 8. DETALLE COMPLETO sheet
+    const detalleHeader = [
+      ['Reporte de Importaciones - Detalle Completo'],
+      [filterDesc],
+      [periodo],
+      [''],
+      ['[Ir al Índice]'],
+      [''],
+      [
+        'Fecha', 'Operación', 'Posición', 'Importador', 'Proveedor',
+        'Origen', 'Procedencia', 'Detalle', 'Cantidad', 'Unidad',
+        'Monto (USD)', 'Peso Neto', 'Peso Bruto', 'FOB (USD)',
+        'Flete (USD)', 'Seguro (USD)', 'Aduana', 'Departamento',
+      ],
+    ];
+    const detalleData = declaraciones.map((d) => [
+      d.fecha_reci ? new Date(d.fecha_reci).toLocaleDateString('es-BO') : '',
+      d.nro_consec ?? '',
+      d.partida_ar ?? '',
+      d.importador ?? '',
+      d.proveedor ?? '',
+      d.pais_orige ?? '',
+      d.pais_pro ?? '',
+      d.descripcio ?? '',
+      fmt(d.cantidad),
+      d.unid_med ?? '',
+      fmt(d.cif_item),
+      fmt(d.p_neto),
+      fmt(d.p_bruto),
+      fmt(d.fob),
+      fmt(d.flete_item),
+      fmt(d.seg_item),
+      d.aduana ?? '',
+      d.depto_des ?? '',
+    ]);
+    // Add totals row
+    detalleData.push([
+      'Total', '', '', '', '', '', '', '',
+      declaraciones.reduce((s, d) => s + fmt(d.cantidad), 0),
+      '',
+      totalCif,
+      totalPesoNeto,
+      Number(resumen._sum.p_bruto ?? 0),
+      Number(resumen._sum.fob ?? 0),
+      declaraciones.reduce((s, d) => s + fmt(d.flete_item), 0),
+      declaraciones.reduce((s, d) => s + fmt(d.seg_item), 0),
+      '', '',
+    ]);
+    const wsDetalleData = [...detalleHeader, ...detalleData];
+    const wsDetalle = XLSX.utils.aoa_to_sheet(wsDetalleData);
+    XLSX.utils.book_append_sheet(workbook, wsDetalle, 'Detalle Completo');
+
+    // Generate buffer
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    return buffer;
+  }
+
+  private buildFilterDescription(filtros: {
+    pais_orige?: string;
+    importador?: string;
+    proveedor?: string;
+    descripcion?: string;
+    partida_ar?: string;
+    depto_des?: string;
+  }): string {
+    const parts: string[] = [];
+    if (filtros.partida_ar) parts.push(filtros.partida_ar);
+    if (filtros.descripcion) parts.push(filtros.descripcion.toUpperCase());
+    if (filtros.importador) parts.push(filtros.importador.toUpperCase());
+    if (filtros.proveedor) parts.push(`Proveedor: ${filtros.proveedor}`);
+    if (filtros.pais_orige) parts.push(`Origen: ${filtros.pais_orige}`);
+    if (filtros.depto_des) parts.push(`Depto: ${filtros.depto_des}`);
+    return parts.length > 0 ? parts.join(' - ') : 'Todos los registros';
+  }
+
+  private buildPeriodoDescription(filtros: {
+    fecha_desde?: Date;
+    fecha_hasta?: Date;
+    mes?: string;
+  }): string {
+    if (filtros.fecha_desde && filtros.fecha_hasta) {
+      const desde = filtros.fecha_desde.toLocaleDateString('es-BO');
+      const hasta = filtros.fecha_hasta.toLocaleDateString('es-BO');
+      return `del ${desde} al ${hasta}`;
+    }
+    if (filtros.mes) {
+      return `Mes: ${filtros.mes}`;
+    }
+    return 'Todos los períodos';
+  }
+
+  /**
+   * Build filename for the Excel report
+   */
+  buildReportFilename(filtros: {
+    pais_orige?: string;
+    importador?: string;
+    partida_ar?: string;
+    descripcion?: string;
+    fecha_desde?: Date;
+    fecha_hasta?: Date;
+  }): string {
+    const parts: string[] = ['BO', 'IMP'];
+
+    // Add date range
+    if (filtros.fecha_desde && filtros.fecha_hasta) {
+      const formatDate = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        return `${y}${m}`;
+      };
+      parts.push(`${formatDate(filtros.fecha_desde)} al ${formatDate(filtros.fecha_hasta)}`);
+    } else {
+      parts.push(new Date().getFullYear().toString());
+    }
+
+    // Add partida or description
+    if (filtros.partida_ar) {
+      parts.push(filtros.partida_ar.replace(/\./g, ''));
+    }
+    if (filtros.descripcion) {
+      parts.push(filtros.descripcion.slice(0, 30).toUpperCase());
+    } else if (filtros.importador) {
+      parts.push(filtros.importador.slice(0, 30).toUpperCase());
+    }
+
+    return parts.join(' - ') + '.xlsx';
   }
 }
