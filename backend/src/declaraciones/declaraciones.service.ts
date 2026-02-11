@@ -322,7 +322,7 @@ export class DeclaracionesService {
       if (filtros.fecha_hasta) (where.fecha_reg as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
     }
 
-    const [data, total] = await Promise.all([
+    const [data, total, agregados] = await Promise.all([
       this.prisma.declaracionAduanera.findMany({
         where,
         take: filtros.limit ?? 50,
@@ -330,9 +330,40 @@ export class DeclaracionesService {
         orderBy: { fecha_reg: 'desc' },
       }),
       this.prisma.declaracionAduanera.count({ where }),
+      this.prisma.declaracionAduanera.aggregate({
+        where,
+        _sum: { cif_item: true, fob: true },
+      }),
     ]);
 
-    return { data, total };
+    return {
+      data,
+      total,
+      totalCif: Number(agregados._sum.cif_item ?? 0),
+      totalFob: Number(agregados._sum.fob ?? 0),
+    };
+  }
+
+  async getFilterOptions() {
+    const [paises, departamentos] = await Promise.all([
+      this.prisma.declaracionAduanera.findMany({
+        where: { pais_orige: { not: null } },
+        select: { pais_orige: true },
+        distinct: ['pais_orige'],
+        orderBy: { pais_orige: 'asc' },
+      }),
+      this.prisma.declaracionAduanera.findMany({
+        where: { depto_des: { not: null } },
+        select: { depto_des: true },
+        distinct: ['depto_des'],
+        orderBy: { depto_des: 'asc' },
+      }),
+    ]);
+
+    return {
+      paises: paises.map((p) => p.pais_orige).filter(Boolean) as string[],
+      departamentos: departamentos.map((d) => d.depto_des).filter(Boolean) as string[],
+    };
   }
 
   async reportePorPais(filtros?: { mes?: string; anio?: number }) {
@@ -379,8 +410,7 @@ export class DeclaracionesService {
         totalFob: Number(r._sum.fob ?? 0),
         cantidadRegistros: r._count,
       }))
-      .sort((a, b) => b.totalCif - a.totalCif)
-      .slice(0, filtros?.limit ?? 20);
+      .sort((a, b) => b.totalCif - a.totalCif);
   }
 
   async reportePorDepartamento(filtros?: { mes?: string }) {

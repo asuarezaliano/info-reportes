@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   buscarDeclaraciones,
+  getFilterOptions,
   reportePorPais,
   reportePorImportador,
   reportePorDepartamento,
@@ -12,14 +13,36 @@ import {
 } from "@/services/declaraciones.service";
 import styles from "./page.module.css";
 
+const REPORTE_PAGE_SIZE = 100;
+
 export default function DatosPage() {
-  const [filtros, setFiltros] = useState<FiltrosBusqueda>({ limit: 25 });
+  // Main tab
+  const [tabPrincipal, setTabPrincipal] = useState<"busqueda" | "reportes">("busqueda");
+
+  const [filtros, setFiltros] = useState<FiltrosBusqueda>({ limit: 100 });
   const [pagina, setPagina] = useState(0);
   const [tabReporte, setTabReporte] = useState<"pais" | "importador" | "depto">("pais");
   const [mesInput, setMesInput] = useState("");
   const [anioInput, setAnioInput] = useState("");
   const [mesFiltro, setMesFiltro] = useState("");
   const [anioFiltro, setAnioFiltro] = useState("");
+  const [paginaReporte, setPaginaReporte] = useState(0);
+
+  // Filter form state
+  const [paisOrige, setPaisOrige] = useState("");
+  const [deptoDes, setDeptoDes] = useState("");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [importador, setImportador] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+
+  // Load filter options (distinct countries & departments)
+  const { data: filterOptions } = useQuery({
+    queryKey: ["filter-options"],
+    queryFn: getFilterOptions,
+    staleTime: 5 * 60 * 1000, // cache 5 min
+  });
 
   const { data: listado, isLoading } = useQuery({
     queryKey: ["declaraciones", filtros, pagina],
@@ -45,7 +68,7 @@ export default function DatosPage() {
 
   const { data: reporteImportador } = useQuery({
     queryKey: ["reporte-importador", mesFiltro],
-    queryFn: () => reportePorImportador(mesFiltro || undefined, 15),
+    queryFn: () => reportePorImportador(mesFiltro || undefined),
     enabled: tabReporte === "importador",
   });
 
@@ -57,22 +80,54 @@ export default function DatosPage() {
 
   const handleBuscar = (e: React.FormEvent) => {
     e.preventDefault();
-    const form = e.target as HTMLFormElement;
     setFiltros({
-      busqueda: (form.elements.namedItem("busqueda") as HTMLInputElement)?.value || undefined,
-      pais_orige: (form.elements.namedItem("pais_orige") as HTMLInputElement)?.value || undefined,
-      importador: (form.elements.namedItem("importador") as HTMLInputElement)?.value || undefined,
-      mes: (form.elements.namedItem("mes") as HTMLInputElement)?.value || undefined,
-      depto_des: (form.elements.namedItem("depto_des") as HTMLInputElement)?.value || undefined,
-      descripcion: (form.elements.namedItem("descripcion") as HTMLInputElement)?.value || undefined,
-      limit: 25,
+      busqueda: busqueda || undefined,
+      pais_orige: paisOrige || undefined,
+      importador: importador || undefined,
+      descripcion: descripcion || undefined,
+      depto_des: deptoDes || undefined,
+      fecha_desde: fechaDesde || undefined,
+      fecha_hasta: fechaHasta || undefined,
+      limit: 100,
     });
+    setPagina(0);
+  };
+
+  const handleLimpiar = () => {
+    setPaisOrige("");
+    setDeptoDes("");
+    setFechaDesde("");
+    setFechaHasta("");
+    setBusqueda("");
+    setImportador("");
+    setDescripcion("");
+    setFiltros({ limit: 100 });
     setPagina(0);
   };
 
   const totalPaginas = listado
     ? Math.ceil(listado.total / (filtros.limit || 25))
     : 0;
+
+  const fmt = (n: number) =>
+    n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // Paginate report data client-side
+  const paginate = <T,>(data: T[] | undefined) => {
+    if (!data) return { items: [] as T[], total: 0, totalPages: 0 };
+    const start = paginaReporte * REPORTE_PAGE_SIZE;
+    return {
+      items: data.slice(start, start + REPORTE_PAGE_SIZE),
+      total: data.length,
+      totalPages: Math.ceil(data.length / REPORTE_PAGE_SIZE),
+    };
+  };
+
+  const paisPag = useMemo(() => paginate(reportePais), [reportePais, paginaReporte]);
+  const importadorPag = useMemo(() => paginate(reporteImportador), [reporteImportador, paginaReporte]);
+  const deptoPag = useMemo(() => paginate(reporteDepto), [reporteDepto, paginaReporte]);
+
+  const currentReportPag = tabReporte === "pais" ? paisPag : tabReporte === "importador" ? importadorPag : deptoPag;
 
   return (
     <div className={styles.container}>
@@ -81,225 +136,362 @@ export default function DatosPage() {
         <p>Carga archivos Excel o CSV, busca y genera reportes</p>
       </header>
 
-      <section className={styles.resumen}>
-        {resumen && (
-          <div className={styles.cards}>
-            <div className={styles.card}>
-              <span>Total registros</span>
-              <strong>{resumen.totalRegistros.toLocaleString()}</strong>
+      {/* ── Tabs principales ── */}
+      <nav className={styles.mainTabs}>
+        <button
+          className={`${styles.mainTab} ${tabPrincipal === "busqueda" ? styles.mainTabActive : ""}`}
+          onClick={() => setTabPrincipal("busqueda")}
+        >
+          Búsqueda
+        </button>
+        <button
+          className={`${styles.mainTab} ${tabPrincipal === "reportes" ? styles.mainTabActive : ""}`}
+          onClick={() => setTabPrincipal("reportes")}
+        >
+          Reportes
+        </button>
+      </nav>
+
+      {/* ══════════════════════════════════════ */}
+      {/* ── TAB: Búsqueda                    ── */}
+      {/* ══════════════════════════════════════ */}
+      {tabPrincipal === "busqueda" && (
+        <>
+          {/* Filtros */}
+          <section className={styles.busqueda}>
+            <h2>Filtros de Búsqueda</h2>
+            <form onSubmit={handleBuscar} className={styles.filterGrid}>
+              <div className={styles.filterRow}>
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Búsqueda general</label>
+                  <input
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="País, importador, descripción..."
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Importador</label>
+                  <input
+                    value={importador}
+                    onChange={(e) => setImportador(e.target.value)}
+                    placeholder="Nombre del importador"
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Descripción producto</label>
+                  <input
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                    placeholder="Descripción del producto"
+                    className={styles.input}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.filterRow}>
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>País de origen</label>
+                  <select
+                    value={paisOrige}
+                    onChange={(e) => setPaisOrige(e.target.value)}
+                    className={styles.select}
+                  >
+                    <option value="">Todos los países</option>
+                    {filterOptions?.paises.map((pais) => (
+                      <option key={pais} value={pais}>{pais}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Departamento</label>
+                  <select
+                    value={deptoDes}
+                    onChange={(e) => setDeptoDes(e.target.value)}
+                    className={styles.select}
+                  >
+                    <option value="">Todos los departamentos</option>
+                    {filterOptions?.departamentos.map((dep) => (
+                      <option key={dep} value={dep}>{dep}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Fecha desde</label>
+                  <input
+                    type="date"
+                    value={fechaDesde}
+                    onChange={(e) => setFechaDesde(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Fecha hasta</label>
+                  <input
+                    type="date"
+                    value={fechaHasta}
+                    onChange={(e) => setFechaHasta(e.target.value)}
+                    className={styles.input}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.filterActions}>
+                <button type="submit" className={styles.btnPrimary}>Buscar</button>
+                <button type="button" onClick={handleLimpiar} className={styles.btnSecondary}>
+                  Limpiar filtros
+                </button>
+              </div>
+            </form>
+          </section>
+
+          {/* Tabla de datos */}
+          <section className={styles.datos}>
+            <h2>Datos ({listado?.total ?? 0} registros)</h2>
+            {isLoading ? (
+              <p>Cargando...</p>
+            ) : (
+              <>
+                <div className={styles.tableWrapper}>
+                  <table className={styles.tablaDatos}>
+                    <thead>
+                      <tr>
+                        <th>Nro</th>
+                        <th>País</th>
+                        <th>Importador</th>
+                        <th>Despachante</th>
+                        <th>Descripción</th>
+                        <th>Acuerdo</th>
+                        <th>Cantidad</th>
+                        <th>FOB (USD)</th>
+                        <th>CIF Item (USD)</th>
+                        <th>Mes</th>
+                        <th>Depto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listado?.data.map((d) => (
+                        <tr key={d.id}>
+                          <td>{d.nro_consec}</td>
+                          <td>{d.pais_orige}</td>
+                          <td>{d.importador}</td>
+                          <td>{d.despachant ?? "-"}</td>
+                          <td className={styles.desc}>
+                            {d.descripcio ? String(d.descripcio).slice(0, 40) + "..." : "-"}
+                          </td>
+                          <td>{d.acuerdo_co ?? "-"}</td>
+                          <td>{d.cantidad}</td>
+                          <td>{d.fob != null ? fmt(Number(d.fob)) : "-"}</td>
+                          <td>{d.cif_item != null ? fmt(Number(d.cif_item)) : "-"}</td>
+                          <td>{d.mes}</td>
+                          <td>{d.depto_des}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {listado && (
+                  <div className={styles.summaryBar}>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Registros filtrados:</span>
+                      <span className={styles.summaryValue}>{listado.total.toLocaleString()}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Total FOB (USD):</span>
+                      <span className={styles.summaryValue}>${fmt(listado.totalFob)}</span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                      <span className={styles.summaryLabel}>Total CIF (USD):</span>
+                      <span className={styles.summaryValue}>${fmt(listado.totalCif)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {totalPaginas > 1 && (
+                  <div className={styles.paginacion}>
+                    <button
+                      onClick={() => setPagina((p) => Math.max(0, p - 1))}
+                      disabled={pagina === 0}
+                    >
+                      Anterior
+                    </button>
+                    <span>Página {pagina + 1} de {totalPaginas}</span>
+                    <button
+                      onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
+                      disabled={pagina >= totalPaginas - 1}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════ */}
+      {/* ── TAB: Reportes                    ── */}
+      {/* ══════════════════════════════════════ */}
+      {tabPrincipal === "reportes" && (
+        <>
+          {/* Resumen general */}
+          <section className={styles.resumen}>
+            {resumen && (
+              <div className={styles.cards}>
+                <div className={styles.card}>
+                  <span>Total registros</span>
+                  <strong>{resumen.totalRegistros.toLocaleString()}</strong>
+                </div>
+                <div className={styles.card}>
+                  <span>Total CIF (USD)</span>
+                  <strong>{fmt(resumen.totalCif)}</strong>
+                </div>
+                <div className={styles.card}>
+                  <span>Total FOB (USD)</span>
+                  <strong>{fmt(resumen.totalFob)}</strong>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Reportes */}
+          <section className={styles.reportes}>
+            <div className={styles.reportFilters}>
+              <input
+                placeholder="Mes (OCT25)"
+                value={mesInput}
+                onChange={(e) => setMesInput(e.target.value)}
+                className={styles.input}
+              />
+              <input
+                placeholder="Año"
+                value={anioInput}
+                onChange={(e) => setAnioInput(e.target.value)}
+                className={styles.input}
+              />
+              <button
+                onClick={() => { setMesFiltro(mesInput); setAnioFiltro(anioInput); }}
+                className={styles.btnPrimary}
+              >
+                Aplicar
+              </button>
+              <div className={styles.reportTabGroup}>
+                <button
+                  onClick={() => { setTabReporte("pais"); setPaginaReporte(0); }}
+                  className={`${styles.reportTab} ${tabReporte === "pais" ? styles.btnActive : ""}`}
+                >
+                  Por país
+                </button>
+                <button
+                  onClick={() => { setTabReporte("importador"); setPaginaReporte(0); }}
+                  className={`${styles.reportTab} ${tabReporte === "importador" ? styles.btnActive : ""}`}
+                >
+                  Por importador
+                </button>
+                <button
+                  onClick={() => { setTabReporte("depto"); setPaginaReporte(0); }}
+                  className={`${styles.reportTab} ${tabReporte === "depto" ? styles.btnActive : ""}`}
+                >
+                  Por departamento
+                </button>
+              </div>
             </div>
-            <div className={styles.card}>
-              <span>Total CIF (USD)</span>
-              <strong>{resumen.totalCif.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>
-            </div>
-            <div className={styles.card}>
-              <span>Total FOB (USD)</span>
-              <strong>{resumen.totalFob.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>
-            </div>
-          </div>
-        )}
-      </section>
 
-      <section className={styles.busqueda}>
-        <h2>Búsqueda</h2>
-        <form onSubmit={handleBuscar} className={styles.searchForm}>
-          <input
-            name="busqueda"
-            placeholder="Buscar en país, importador, descripción..."
-            className={styles.input}
-          />
-          <input
-            name="pais_orige"
-            placeholder="País origen"
-            className={styles.input}
-          />
-          <input
-            name="importador"
-            placeholder="Importador"
-            className={styles.input}
-          />
-          <input
-            name="descripcion"
-            placeholder="Descripción producto"
-            className={styles.input}
-          />
-          <input name="mes" placeholder="Mes (ej: OCT25)" className={styles.input} />
-          <input
-            name="depto_des"
-            placeholder="Departamento"
-            className={styles.input}
-          />
-          <button type="submit" className={styles.btnPrimary}>
-            Buscar
-          </button>
-        </form>
-      </section>
+            <p className={styles.reportCount}>{currentReportPag.total} resultados</p>
 
-      <section className={styles.reportes}>
-        <h2>Reportes</h2>
-        <div className={styles.reportFilters}>
-          <input
-            placeholder="Mes (OCT25)"
-            value={mesInput}
-            onChange={(e) => setMesInput(e.target.value)}
-            className={styles.input}
-          />
-          <input
-            placeholder="Año"
-            value={anioInput}
-            onChange={(e) => setAnioInput(e.target.value)}
-            className={styles.input}
-          />
-          <button
-            onClick={() => {
-              setMesFiltro(mesInput);
-              setAnioFiltro(anioInput);
-            }}
-            className={styles.btnPrimary}
-          >
-            Aplicar
-          </button>
-          <button onClick={() => setTabReporte("pais")} className={tabReporte === "pais" ? styles.btnActive : ""}>
-            Por país
-          </button>
-          <button onClick={() => setTabReporte("importador")} className={tabReporte === "importador" ? styles.btnActive : ""}>
-            Por importador
-          </button>
-          <button onClick={() => setTabReporte("depto")} className={tabReporte === "depto" ? styles.btnActive : ""}>
-            Por departamento
-          </button>
-        </div>
-
-        <div className={styles.tablaReporte}>
-          {tabReporte === "pais" && reportePais && (
-            <table>
-              <thead>
-                <tr>
-                  <th>País</th>
-                  <th>Registros</th>
-                  <th>Total CIF (USD)</th>
-                  <th>Total FOB (USD)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reportePais.map((r) => (
-                  <tr key={r.pais}>
-                    <td>{r.pais}</td>
-                    <td>{r.cantidadRegistros}</td>
-                    <td>{r.totalCif.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
-                    <td>{r.totalFob.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {tabReporte === "importador" && reporteImportador && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Importador</th>
-                  <th>NIT</th>
-                  <th>Registros</th>
-                  <th>Total CIF (USD)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reporteImportador.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.importador}</td>
-                    <td>{r.nit}</td>
-                    <td>{r.cantidadRegistros}</td>
-                    <td>{r.totalCif.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {tabReporte === "depto" && reporteDepto && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Departamento</th>
-                  <th>Registros</th>
-                  <th>Total CIF (USD)</th>
-                  <th>Total FOB (USD)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reporteDepto.map((r) => (
-                  <tr key={r.departamento}>
-                    <td>{r.departamento}</td>
-                    <td>{r.cantidadRegistros}</td>
-                    <td>{r.totalCif.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
-                    <td>{r.totalFob.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </section>
-
-      <section className={styles.datos}>
-        <h2>Datos ({listado?.total ?? 0} registros)</h2>
-        {isLoading ? (
-          <p>Cargando...</p>
-        ) : (
-          <>
-            <div className={styles.tableWrapper}>
-              <table className={styles.tablaDatos}>
-                <thead>
-                  <tr>
-                    <th>Nro</th>
-                    <th>País</th>
-                    <th>Importador</th>
-                    <th>Descripción</th>
-                    <th>Cantidad</th>
-                    <th>CIF (USD)</th>
-                    <th>Mes</th>
-                    <th>Depto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listado?.data.map((d) => (
-                    <tr key={d.id}>
-                      <td>{d.nro_consec}</td>
-                      <td>{d.pais_orige}</td>
-                      <td>{d.importador}</td>
-                      <td className={styles.desc}>
-                        {d.descripcio ? String(d.descripcio).slice(0, 40) + "..." : "-"}
-                      </td>
-                      <td>{d.cantidad}</td>
-                      <td>{d.cif_item?.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
-                      <td>{d.mes}</td>
-                      <td>{d.depto_des}</td>
+            <div className={styles.tablaReporte}>
+              {tabReporte === "pais" && reportePais && (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>País</th>
+                      <th>Registros</th>
+                      <th>Total CIF (USD)</th>
+                      <th>Total FOB (USD)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {paisPag.items.map((r) => (
+                      <tr key={r.pais}>
+                        <td>{r.pais}</td>
+                        <td>{r.cantidadRegistros}</td>
+                        <td>{fmt(r.totalCif)}</td>
+                        <td>{fmt(r.totalFob)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {tabReporte === "importador" && reporteImportador && (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Importador</th>
+                      <th>NIT</th>
+                      <th>Registros</th>
+                      <th>Total CIF (USD)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importadorPag.items.map((r, i) => (
+                      <tr key={i}>
+                        <td>{r.importador}</td>
+                        <td>{r.nit}</td>
+                        <td>{r.cantidadRegistros}</td>
+                        <td>{fmt(r.totalCif)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {tabReporte === "depto" && reporteDepto && (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Departamento</th>
+                      <th>Registros</th>
+                      <th>Total CIF (USD)</th>
+                      <th>Total FOB (USD)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deptoPag.items.map((r) => (
+                      <tr key={r.departamento}>
+                        <td>{r.departamento}</td>
+                        <td>{r.cantidadRegistros}</td>
+                        <td>{fmt(r.totalCif)}</td>
+                        <td>{fmt(r.totalFob)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
-            {totalPaginas > 1 && (
+
+            {currentReportPag.totalPages > 1 && (
               <div className={styles.paginacion}>
                 <button
-                  onClick={() => setPagina((p) => Math.max(0, p - 1))}
-                  disabled={pagina === 0}
+                  onClick={() => setPaginaReporte((p) => Math.max(0, p - 1))}
+                  disabled={paginaReporte === 0}
                 >
                   Anterior
                 </button>
-                <span>
-                  Página {pagina + 1} de {totalPaginas}
-                </span>
+                <span>Página {paginaReporte + 1} de {currentReportPag.totalPages}</span>
                 <button
-                  onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
-                  disabled={pagina >= totalPaginas - 1}
+                  onClick={() => setPaginaReporte((p) => Math.min(currentReportPag.totalPages - 1, p + 1))}
+                  disabled={paginaReporte >= currentReportPag.totalPages - 1}
                 >
                   Siguiente
                 </button>
               </div>
             )}
-          </>
-        )}
-      </section>
+          </section>
+        </>
+      )}
     </div>
   );
 }

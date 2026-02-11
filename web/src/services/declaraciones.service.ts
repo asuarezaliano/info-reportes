@@ -59,9 +59,11 @@ export type Declaracion = {
   descripcio: string | null;
   pais_orige: string | null;
   cantidad: number | null;
+  acuerdo_co: string | null;
   cif_item: number | null;
   fob: number | null;
   importador: string | null;
+  despachant: string | null;
   proveedor: string | null;
   depto_des: string | null;
   mes: string | null;
@@ -73,6 +75,13 @@ export type Declaracion = {
 export type ListadoResultado = {
   data: Declaracion[];
   total: number;
+  totalCif: number;
+  totalFob: number;
+};
+
+export type FilterOptions = {
+  paises: string[];
+  departamentos: string[];
 };
 
 export async function buscarDeclaraciones(
@@ -89,6 +98,14 @@ export async function buscarDeclaraciones(
   );
 
   if (!res.ok) throw new Error("Error al buscar");
+  return res.json();
+}
+
+export async function getFilterOptions(): Promise<FilterOptions> {
+  const res = await fetch(`${API_URL}/declaraciones/filtros/opciones`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Error al cargar opciones de filtros");
   return res.json();
 }
 

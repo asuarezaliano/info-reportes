@@ -105,6 +105,11 @@ export class DeclaracionesController {
     });
   }
 
+  @Get('filtros/opciones')
+  async getFilterOptions() {
+    return this.declaracionesService.getFilterOptions();
+  }
+
   @Get('reportes/por-pais')
   async reportePorPais(
     @Query('mes') mes?: string,
