@@ -1,9 +1,23 @@
+import { clearAuthToken, getAuthToken } from "@/lib/auth-token";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = getAuthToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function throwIfRequestFailed(
+  res: Response,
+  fallbackMessage: string
+): Promise<never> {
+  if (res.status === 401 && typeof window !== "undefined") {
+    clearAuthToken();
+    window.location.href = "/login";
+    throw new Error("Sesion expirada. Inicia sesion nuevamente.");
+  }
+
+  const err = await res.json().catch(() => ({}));
+  throw new Error(err.message || fallbackMessage);
 }
 
 export type ResultadoImportacion = {
@@ -25,8 +39,7 @@ export async function importarArchivo(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Error al importar");
+    await throwIfRequestFailed(res, "Error al importar");
   }
 
   return res.json();
@@ -103,7 +116,7 @@ export async function buscarDeclaraciones(
     { headers: getAuthHeaders() }
   );
 
-  if (!res.ok) throw new Error("Error al buscar");
+  if (!res.ok) await throwIfRequestFailed(res, "Error al buscar");
   return res.json();
 }
 
@@ -111,7 +124,9 @@ export async function getFilterOptions(): Promise<FilterOptions> {
   const res = await fetch(`${API_URL}/declaraciones/filtros/opciones`, {
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Error al cargar opciones de filtros");
+  if (!res.ok) {
+    await throwIfRequestFailed(res, "Error al cargar opciones de filtros");
+  }
   return res.json();
 }
 
@@ -125,7 +140,7 @@ export async function getSubPartidas(capitulo: string): Promise<SubPartida[]> {
     `${API_URL}/declaraciones/filtros/sub-partidas?capitulo=${capitulo}`,
     { headers: getAuthHeaders() }
   );
-  if (!res.ok) throw new Error("Error al cargar sub-partidas");
+  if (!res.ok) await throwIfRequestFailed(res, "Error al cargar sub-partidas");
   return res.json();
 }
 
@@ -150,7 +165,7 @@ export async function reportePorPais(
     { headers: getAuthHeaders() }
   );
 
-  if (!res.ok) throw new Error("Error al cargar reporte");
+  if (!res.ok) await throwIfRequestFailed(res, "Error al cargar reporte");
   return res.json();
 }
 
@@ -177,7 +192,7 @@ export async function reportePorImportador(
     { headers: getAuthHeaders() }
   );
 
-  if (!res.ok) throw new Error("Error al cargar reporte");
+  if (!res.ok) await throwIfRequestFailed(res, "Error al cargar reporte");
   return res.json();
 }
 
@@ -201,7 +216,7 @@ export async function reportePorDepartamento(
     { headers: getAuthHeaders() }
   );
 
-  if (!res.ok) throw new Error("Error al cargar reporte");
+  if (!res.ok) await throwIfRequestFailed(res, "Error al cargar reporte");
   return res.json();
 }
 
@@ -225,7 +240,7 @@ export async function resumenGeneral(
     { headers: getAuthHeaders() }
   );
 
-  if (!res.ok) throw new Error("Error al cargar resumen");
+  if (!res.ok) await throwIfRequestFailed(res, "Error al cargar resumen");
   return res.json();
 }
 
@@ -240,7 +255,9 @@ export async function evolucionMensual(): Promise<EvolucionMensual[]> {
   const res = await fetch(`${API_URL}/declaraciones/reportes/evolucion-mensual`, {
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Error al cargar evolución mensual");
+  if (!res.ok) {
+    await throwIfRequestFailed(res, "Error al cargar evolucion mensual");
+  }
   return res.json();
 }
 
@@ -256,7 +273,7 @@ export async function topCategorias(limit = 8): Promise<TopCategoria[]> {
     `${API_URL}/declaraciones/reportes/top-categorias?limit=${limit}`,
     { headers: getAuthHeaders() }
   );
-  if (!res.ok) throw new Error("Error al cargar categorías");
+  if (!res.ok) await throwIfRequestFailed(res, "Error al cargar categorias");
   return res.json();
 }
 
@@ -276,7 +293,7 @@ export async function exportarReporteExcel(
   );
 
   if (!res.ok) {
-    throw new Error("Error al generar el reporte");
+    await throwIfRequestFailed(res, "Error al generar el reporte");
   }
 
   // Get filename from Content-Disposition header

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFiltrosBusqueda } from "@/hooks/use-filtros-busqueda";
+import { getAuthToken } from "@/lib/auth-token";
 import HeaderFilter from "@/components/datos/header-filter";
 import DatosList from "@/components/datos/datos-list";
 import { ReporteGenerated } from "@/components/datos/reporte-generated";
@@ -10,6 +12,15 @@ import { Logo } from "@/components/ui";
 import styles from "./page.module.css";
 
 export default function DatosPage() {
+  const router = useRouter();
+  const token = getAuthToken();
+
+  useEffect(() => {
+    if (!token) {
+      router.replace("/login");
+    }
+  }, [router, token]);
+
   // Main tab
   const [tabPrincipal, setTabPrincipal] = useState<"busqueda" | "reportes">(
     "busqueda",

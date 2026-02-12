@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLogin } from "@/hooks/use-auth";
+import { Logo } from "@/components/ui";
 import styles from "./login-form.module.css";
 
 const loginSchema = z.object({
@@ -30,8 +31,11 @@ export default function LoginForm() {
 
   return (
     <div className={styles.card}>
+      <div className={styles.brand}>
+        <Logo size={86} />
+      </div>
       <h1 className={styles.title}>Infonect</h1>
-      <p className={styles.subtitle}>Iniciá sesión en tu cuenta</p>
+      <p className={styles.subtitle}>Inicia sesion para acceder a datos aduaneros</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
         {loginMutation.error && (

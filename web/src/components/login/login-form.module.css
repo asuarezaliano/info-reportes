@@ -1,11 +1,17 @@
 .card {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   padding: 2.75rem;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid var(--border);
-  background: var(--background);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: linear-gradient(180deg, var(--background) 0%, #f8fbff 100%);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.1), 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
 }
 
 .title {
@@ -21,7 +27,7 @@
   text-align: center;
   color: var(--muted);
   font-size: 0.95rem;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2rem;
 }
 
 .form {
@@ -45,8 +51,8 @@
 }
 
 .field input {
-  padding: 0.7rem 0.9rem;
-  border-radius: 8px;
+  padding: 0.78rem 0.92rem;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--foreground);
@@ -66,8 +72,8 @@
 }
 
 .button {
-  padding: 0.8rem;
-  border-radius: 10px;
+  padding: 0.9rem;
+  border-radius: 12px;
   border: none;
   background: var(--primary);
   color: #fff;

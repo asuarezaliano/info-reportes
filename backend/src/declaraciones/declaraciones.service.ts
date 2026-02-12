@@ -4,12 +4,21 @@ import { parse as parseCsvStream } from 'csv-parse';
 import { parse as parseCsvSync } from 'csv-parse/sync';
 import * as XLSX from 'xlsx';
 import type { Prisma } from '../../generated/prisma/client';
-import { closeSync, createReadStream, openSync, readFileSync, readSync } from 'node:fs';
+import {
+  closeSync,
+  createReadStream,
+  openSync,
+  readFileSync,
+  readSync,
+} from 'node:fs';
 
 @Injectable()
 export class DeclaracionesService {
   // In-memory cache for catalog queries
-  private catalogCache = new Map<string, { data: { codigo: string; descripcion: string }[]; timestamp: number }>();
+  private catalogCache = new Map<
+    string,
+    { data: { codigo: string; descripcion: string }[]; timestamp: number }
+  >();
   private static CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
   constructor(private prisma: PrismaService) {}
@@ -27,7 +36,11 @@ export class DeclaracionesService {
     return this.importarCsvStreamDesdeDisco(filePath, delimiter);
   }
 
-  async importarArchivo(buffer: Buffer, tipo: 'csv' | 'excel', delimiter = '\t') {
+  async importarArchivo(
+    buffer: Buffer,
+    tipo: 'csv' | 'excel',
+    delimiter = '\t',
+  ) {
     const records =
       tipo === 'excel'
         ? this.leerExcel(buffer)
@@ -38,7 +51,9 @@ export class DeclaracionesService {
   private leerCSVBuffer(buffer: Buffer, delimiter: string) {
     const content = buffer.toString('utf8');
     const detectedDelimiter =
-      delimiter && delimiter.length > 0 ? delimiter : this.detectDelimiter(content);
+      delimiter && delimiter.length > 0
+        ? delimiter
+        : this.detectDelimiter(content);
     const fromLine = this.detectFromLine(content, detectedDelimiter);
 
     return parseCsvSync(content, {
@@ -52,12 +67,17 @@ export class DeclaracionesService {
     }) as Record<string, string>[];
   }
 
-  private async importarCsvStreamDesdeDisco(filePath: string, delimiter: string) {
+  private async importarCsvStreamDesdeDisco(
+    filePath: string,
+    delimiter: string,
+  ) {
     const resultados = { importados: 0, errores: 0, mensajes: [] as string[] };
 
     const preview = this.readFileHead(filePath, 128 * 1024);
     const detectedDelimiter =
-      delimiter && delimiter.length > 0 ? delimiter : this.detectDelimiter(preview);
+      delimiter && delimiter.length > 0
+        ? delimiter
+        : this.detectDelimiter(preview);
     const fromLine = this.detectFromLine(preview, detectedDelimiter);
 
     const parser = parseCsvStream({
@@ -111,9 +131,9 @@ export class DeclaracionesService {
   }
 
   private detectDelimiter(content: string): string {
-    const firstDataLine = content
-      .split(/\r?\n/)
-      .find((line) => line && line.trim().length > 0) ?? '';
+    const firstDataLine =
+      content.split(/\r?\n/).find((line) => line && line.trim().length > 0) ??
+      '';
 
     const candidates = ['\t', ';', ',', '|'];
     let best = '\t';
@@ -150,7 +170,7 @@ export class DeclaracionesService {
     const data = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, {
       header: 1,
       defval: '',
-    }) as unknown[][];
+    });
 
     if (data.length < 2) return [];
 
@@ -221,7 +241,10 @@ export class DeclaracionesService {
     let updated = 0;
 
     for (const p of partidas) {
-      const capitulo = p.partida_ar.replace(/\D/g, '').slice(0, 2).padStart(2, '0');
+      const capitulo = p.partida_ar
+        .replace(/\D/g, '')
+        .slice(0, 2)
+        .padStart(2, '0');
       const result = await this.prisma.partidaArancelaria.upsert({
         where: { codigo: p.partida_ar },
         create: {
@@ -247,7 +270,9 @@ export class DeclaracionesService {
     return { total: partidas.length, added, updated };
   }
 
-  private mapearFila(row: Record<string, string>): Prisma.DeclaracionAduaneraCreateInput | null {
+  private mapearFila(
+    row: Record<string, string>,
+  ): Prisma.DeclaracionAduaneraCreateInput | null {
     const parseDecimal = (val: string) => {
       if (!val || val.trim() === '') return null;
       const num = parseFloat(val.replace(',', '.'));
@@ -284,18 +309,92 @@ export class DeclaracionesService {
 
     const datosExtra: Record<string, unknown> = {};
     const columnasExtra = [
-      'CODIGO_NAC', 'DECLARACIO', 'DOC_EMBARQ', 'C_BULTO', 'CODIGO_EMB', 'TIPO_DUI_A', 'VERSION_A',
-      'GA_EFECT', 'GA_GARAN', 'GA_LIBER', 'GA_SIN_P', 'ICD_EFECT', 'ICD_LIBER', 'ICD_GARAN', 'ICD_SIN_P',
-      'ICE_EFECT', 'ICE_GARAN', 'ICE_LIBER', 'ICE_SIN_P', 'IEHD_EFECT', 'IEHD_LIBER', 'IEHD_SIN_P',
-      'IMPZONFRAN', 'INS_PREVIA', 'IVA_EFECT', 'IVA_GARAN', 'IVA_LIBER', 'IVA_SIN_P', 'LEVABANDON',
-      'VGA_VALOR', 'VIC_VALOR', 'VIH_VALOR', 'VIV_VALOR', 'NRO_REGIST', 'CODIGO_MAR', 'CODIGO_CLA',
-      'CODIGO_TIP', 'CODIGO_SUB', 'CILINDRADA', 'MOTOR', 'CHASIS', 'ANIO_FABRI', 'ANIO_MODEL',
-      'CODIGO_TRA', 'NRO_RUEDAS', 'NRO_PUERTA', 'CAPACIDAD_', 'CODIGO_COM', 'TRANSMISIO',
-      'PATRON_DEC', 'MANIFIESTO', 'FECHA_MAN', 'FECHA_LOC', 'NRO_VAL', 'FECHA_VAL', 'FECHA_PAG',
-      'FECHA_CAN', 'FECHA_VIST', 'FECHA_LEV', 'FECHA_SAL', 'DOC_IMP', 'NRO_DOC', 'DIR_PROVEE',
-      'REG_MAN', 'TASA_CAM', 'NAT_TRANS', 'TRANS_FRO', 'TRANS_INT', 'FLETE', 'SEG', 'GASTOS',
-      'ITMES', 'RECIBO', 'TIPO_DUI_B', 'VERSION_B', 'FECHA_ENM', 'REF_DIM', 'SID_SUMA',
-      'HRS_LOCMA', 'HRS_VALOC', 'HRS_PAVAL', 'HRS_CAPAG', 'HRS_VISCA', 'HRS_LEVIS', 'HRS_SALEV', 'HRS_SALMAN',
+      'CODIGO_NAC',
+      'DECLARACIO',
+      'DOC_EMBARQ',
+      'C_BULTO',
+      'CODIGO_EMB',
+      'TIPO_DUI_A',
+      'VERSION_A',
+      'GA_EFECT',
+      'GA_GARAN',
+      'GA_LIBER',
+      'GA_SIN_P',
+      'ICD_EFECT',
+      'ICD_LIBER',
+      'ICD_GARAN',
+      'ICD_SIN_P',
+      'ICE_EFECT',
+      'ICE_GARAN',
+      'ICE_LIBER',
+      'ICE_SIN_P',
+      'IEHD_EFECT',
+      'IEHD_LIBER',
+      'IEHD_SIN_P',
+      'IMPZONFRAN',
+      'INS_PREVIA',
+      'IVA_EFECT',
+      'IVA_GARAN',
+      'IVA_LIBER',
+      'IVA_SIN_P',
+      'LEVABANDON',
+      'VGA_VALOR',
+      'VIC_VALOR',
+      'VIH_VALOR',
+      'VIV_VALOR',
+      'NRO_REGIST',
+      'CODIGO_MAR',
+      'CODIGO_CLA',
+      'CODIGO_TIP',
+      'CODIGO_SUB',
+      'CILINDRADA',
+      'MOTOR',
+      'CHASIS',
+      'ANIO_FABRI',
+      'ANIO_MODEL',
+      'CODIGO_TRA',
+      'NRO_RUEDAS',
+      'NRO_PUERTA',
+      'CAPACIDAD_',
+      'CODIGO_COM',
+      'TRANSMISIO',
+      'PATRON_DEC',
+      'MANIFIESTO',
+      'FECHA_MAN',
+      'FECHA_LOC',
+      'NRO_VAL',
+      'FECHA_VAL',
+      'FECHA_PAG',
+      'FECHA_CAN',
+      'FECHA_VIST',
+      'FECHA_LEV',
+      'FECHA_SAL',
+      'DOC_IMP',
+      'NRO_DOC',
+      'DIR_PROVEE',
+      'REG_MAN',
+      'TASA_CAM',
+      'NAT_TRANS',
+      'TRANS_FRO',
+      'TRANS_INT',
+      'FLETE',
+      'SEG',
+      'GASTOS',
+      'ITMES',
+      'RECIBO',
+      'TIPO_DUI_B',
+      'VERSION_B',
+      'FECHA_ENM',
+      'REF_DIM',
+      'SID_SUMA',
+      'HRS_LOCMA',
+      'HRS_VALOC',
+      'HRS_PAVAL',
+      'HRS_CAPAG',
+      'HRS_VISCA',
+      'HRS_LEVIS',
+      'HRS_SALEV',
+      'HRS_SALMAN',
     ];
 
     for (const col of columnasExtra) {
@@ -347,9 +446,22 @@ export class DeclaracionesService {
   }
 
   private static SORTABLE_COLUMNS = new Set([
-    'nro_consec', 'pais_orige', 'importador', 'despachant', 'descripcio',
-    'acuerdo_co', 'cantidad', 'fob', 'cif_item', 'mes', 'depto_des',
-    'fecha_reg', 'fecha_reci', 'p_bruto', 'p_neto', 'anio',
+    'nro_consec',
+    'pais_orige',
+    'importador',
+    'despachant',
+    'descripcio',
+    'acuerdo_co',
+    'cantidad',
+    'fob',
+    'cif_item',
+    'mes',
+    'depto_des',
+    'fecha_reg',
+    'fecha_reci',
+    'p_bruto',
+    'p_neto',
+    'anio',
   ]);
 
   async listar(filtros: {
@@ -371,17 +483,24 @@ export class DeclaracionesService {
     const where: Prisma.DeclaracionAduaneraWhereInput = {};
 
     if (filtros.pais_orige) {
-      const paises = filtros.pais_orige.split(',').map((p) => p.trim()).filter(Boolean);
+      const paises = filtros.pais_orige
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean);
       if (paises.length === 1) {
         where.pais_orige = { contains: paises[0], mode: 'insensitive' };
       } else if (paises.length > 1) {
         where.pais_orige = { in: paises };
       }
     }
-    if (filtros.importador) where.importador = { contains: filtros.importador, mode: 'insensitive' };
-    if (filtros.proveedor) where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
-    if (filtros.descripcion) where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
-    if (filtros.partida_ar) where.partida_ar = { startsWith: filtros.partida_ar };
+    if (filtros.importador)
+      where.importador = { contains: filtros.importador, mode: 'insensitive' };
+    if (filtros.proveedor)
+      where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
+    if (filtros.descripcion)
+      where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
+    if (filtros.partida_ar)
+      where.partida_ar = { startsWith: filtros.partida_ar };
     if (filtros.mes) where.mes = filtros.mes;
     if (filtros.depto_des) where.depto_des = filtros.depto_des;
 
@@ -398,12 +517,15 @@ export class DeclaracionesService {
 
     if (filtros.fecha_desde || filtros.fecha_hasta) {
       where.fecha_reci = {};
-      if (filtros.fecha_desde) (where.fecha_reci as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
-      if (filtros.fecha_hasta) (where.fecha_reci as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
+      if (filtros.fecha_desde)
+        (where.fecha_reci as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
+      if (filtros.fecha_hasta)
+        (where.fecha_reci as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
     }
 
     const orderBy: Record<string, 'asc' | 'desc'> =
-      filtros.sortBy && DeclaracionesService.SORTABLE_COLUMNS.has(filtros.sortBy)
+      filtros.sortBy &&
+      DeclaracionesService.SORTABLE_COLUMNS.has(filtros.sortBy)
         ? { [filtros.sortBy]: filtros.sortDir ?? 'asc' }
         : { fecha_reci: 'desc' };
 
@@ -447,14 +569,19 @@ export class DeclaracionesService {
 
     return {
       paises: paises.map((p) => p.pais_orige).filter(Boolean) as string[],
-      departamentos: departamentos.map((d) => d.depto_des).filter(Boolean) as string[],
+      departamentos: departamentos
+        .map((d) => d.depto_des)
+        .filter(Boolean) as string[],
     };
   }
 
   async getSubPartidas(capitulo: string) {
     // Check in-memory cache first
     const cached = this.catalogCache.get(capitulo);
-    if (cached && Date.now() - cached.timestamp < DeclaracionesService.CACHE_TTL) {
+    if (
+      cached &&
+      Date.now() - cached.timestamp < DeclaracionesService.CACHE_TTL
+    ) {
       return cached.data;
     }
 
@@ -475,18 +602,26 @@ export class DeclaracionesService {
     return result;
   }
 
-  private buildDateFilter(fechaDesde?: Date, fechaHasta?: Date): Prisma.DeclaracionAduaneraWhereInput {
+  private buildDateFilter(
+    fechaDesde?: Date,
+    fechaHasta?: Date,
+  ): Prisma.DeclaracionAduaneraWhereInput {
     const where: Prisma.DeclaracionAduaneraWhereInput = {};
     if (fechaDesde || fechaHasta) {
       where.fecha_reci = {};
-      if (fechaDesde) (where.fecha_reci as Prisma.DateTimeFilter).gte = fechaDesde;
-      if (fechaHasta) (where.fecha_reci as Prisma.DateTimeFilter).lte = fechaHasta;
+      if (fechaDesde)
+        (where.fecha_reci as Prisma.DateTimeFilter).gte = fechaDesde;
+      if (fechaHasta)
+        (where.fecha_reci as Prisma.DateTimeFilter).lte = fechaHasta;
     }
     return where;
   }
 
   async reportePorPais(filtros?: { fechaDesde?: Date; fechaHasta?: Date }) {
-    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
+    const where = this.buildDateFilter(
+      filtros?.fechaDesde,
+      filtros?.fechaHasta,
+    );
 
     const result = await this.prisma.declaracionAduanera.groupBy({
       by: ['pais_orige'],
@@ -507,8 +642,15 @@ export class DeclaracionesService {
       .sort((a, b) => b.totalCif - a.totalCif);
   }
 
-  async reportePorImportador(filtros?: { fechaDesde?: Date; fechaHasta?: Date; limit?: number }) {
-    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
+  async reportePorImportador(filtros?: {
+    fechaDesde?: Date;
+    fechaHasta?: Date;
+    limit?: number;
+  }) {
+    const where = this.buildDateFilter(
+      filtros?.fechaDesde,
+      filtros?.fechaHasta,
+    );
 
     const result = await this.prisma.declaracionAduanera.groupBy({
       by: ['importador', 'nit_desp'],
@@ -529,8 +671,14 @@ export class DeclaracionesService {
       .sort((a, b) => b.totalCif - a.totalCif);
   }
 
-  async reportePorDepartamento(filtros?: { fechaDesde?: Date; fechaHasta?: Date }) {
-    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
+  async reportePorDepartamento(filtros?: {
+    fechaDesde?: Date;
+    fechaHasta?: Date;
+  }) {
+    const where = this.buildDateFilter(
+      filtros?.fechaDesde,
+      filtros?.fechaHasta,
+    );
 
     const result = await this.prisma.declaracionAduanera.groupBy({
       by: ['depto_des'],
@@ -551,7 +699,10 @@ export class DeclaracionesService {
   }
 
   async resumenGeneral(filtros?: { fechaDesde?: Date; fechaHasta?: Date }) {
-    const where = this.buildDateFilter(filtros?.fechaDesde, filtros?.fechaHasta);
+    const where = this.buildDateFilter(
+      filtros?.fechaDesde,
+      filtros?.fechaHasta,
+    );
 
     const [agregados, totalRegistros] = await Promise.all([
       this.prisma.declaracionAduanera.aggregate({
@@ -591,8 +742,18 @@ export class DeclaracionesService {
       .sort((a, b) => {
         // Sort by year then month: format is like "OCT25", "ENE26"
         const meses: Record<string, number> = {
-          ENE: 1, FEB: 2, MAR: 3, ABR: 4, MAY: 5, JUN: 6,
-          JUL: 7, AGO: 8, SEP: 9, OCT: 10, NOV: 11, DIC: 12,
+          ENE: 1,
+          FEB: 2,
+          MAR: 3,
+          ABR: 4,
+          MAY: 5,
+          JUN: 6,
+          JUL: 7,
+          AGO: 8,
+          SEP: 9,
+          OCT: 10,
+          NOV: 11,
+          DIC: 12,
         };
         const parseMs = (m: string | null) => {
           if (!m) return 0;
@@ -609,7 +770,12 @@ export class DeclaracionesService {
    */
   async topCategorias(limit = 8) {
     const result = await this.prisma.$queryRaw<
-      { capitulo: string; total_cif: number; total_fob: number; registros: bigint }[]
+      {
+        capitulo: string;
+        total_cif: number;
+        total_fob: number;
+        registros: bigint;
+      }[]
     >`
       SELECT
         LEFT(REGEXP_REPLACE(partida_ar, '[^0-9]', '', 'g'), 2) AS capitulo,
@@ -661,24 +827,33 @@ export class DeclaracionesService {
     const where: Prisma.DeclaracionAduaneraWhereInput = {};
 
     if (filtros.pais_orige) {
-      const paises = filtros.pais_orige.split(',').map((p) => p.trim()).filter(Boolean);
+      const paises = filtros.pais_orige
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean);
       if (paises.length === 1) {
         where.pais_orige = { contains: paises[0], mode: 'insensitive' };
       } else if (paises.length > 1) {
         where.pais_orige = { in: paises };
       }
     }
-    if (filtros.importador) where.importador = { contains: filtros.importador, mode: 'insensitive' };
-    if (filtros.proveedor) where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
-    if (filtros.descripcion) where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
-    if (filtros.partida_ar) where.partida_ar = { startsWith: filtros.partida_ar };
+    if (filtros.importador)
+      where.importador = { contains: filtros.importador, mode: 'insensitive' };
+    if (filtros.proveedor)
+      where.proveedor = { contains: filtros.proveedor, mode: 'insensitive' };
+    if (filtros.descripcion)
+      where.descripcio = { contains: filtros.descripcion, mode: 'insensitive' };
+    if (filtros.partida_ar)
+      where.partida_ar = { startsWith: filtros.partida_ar };
     if (filtros.mes) where.mes = filtros.mes;
     if (filtros.depto_des) where.depto_des = filtros.depto_des;
 
     if (filtros.fecha_desde || filtros.fecha_hasta) {
       where.fecha_reci = {};
-      if (filtros.fecha_desde) (where.fecha_reci as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
-      if (filtros.fecha_hasta) (where.fecha_reci as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
+      if (filtros.fecha_desde)
+        (where.fecha_reci as Prisma.DateTimeFilter).gte = filtros.fecha_desde;
+      if (filtros.fecha_hasta)
+        (where.fecha_reci as Prisma.DateTimeFilter).lte = filtros.fecha_hasta;
     }
 
     // Fetch all data needed for the report in parallel
@@ -756,8 +931,9 @@ export class DeclaracionesService {
     const workbook = XLSX.utils.book_new();
 
     // Helper to format numbers (accepts Decimal from Prisma)
-    const fmt = (n: unknown) => n != null ? Number(n) : 0;
-    const pct = (n: number) => totalCif > 0 ? ((n / totalCif) * 100).toFixed(2) + '%' : '0%';
+    const fmt = (n: unknown) => (n != null ? Number(n) : 0);
+    const pct = (n: number) =>
+      totalCif > 0 ? ((n / totalCif) * 100).toFixed(2) + '%' : '0%';
 
     // Build filter description for headers
     const filterDesc = this.buildFilterDescription(filtros);
@@ -863,7 +1039,14 @@ export class DeclaracionesService {
       [''],
       ['[Ir al Índice]'],
       [''],
-      ['Proveedor', 'País', 'Operaciones', 'Monto (USD)', 'Peso Neto', '%Monto'],
+      [
+        'Proveedor',
+        'País',
+        'Operaciones',
+        'Monto (USD)',
+        'Peso Neto',
+        '%Monto',
+      ],
     ];
     const proveedoresData = porProveedor
       .filter((r) => r.proveedor)
@@ -876,7 +1059,14 @@ export class DeclaracionesService {
         pct(fmt(r._sum.cif_item)),
       ])
       .sort((a, b) => Number(b[3]) - Number(a[3]));
-    proveedoresData.push(['Total', '', resumen._count, totalCif, totalPesoNeto, '100%']);
+    proveedoresData.push([
+      'Total',
+      '',
+      resumen._count,
+      totalCif,
+      totalPesoNeto,
+      '100%',
+    ]);
     const wsProveedoresData = [...proveedoresHeader, ...proveedoresData];
     const wsProveedores = XLSX.utils.aoa_to_sheet(wsProveedoresData);
     XLSX.utils.book_append_sheet(workbook, wsProveedores, 'Proveedores');
@@ -938,10 +1128,24 @@ export class DeclaracionesService {
       ['[Ir al Índice]'],
       [''],
       [
-        'Fecha', 'Operación', 'Posición', 'Importador', 'Proveedor',
-        'Origen', 'Procedencia', 'Detalle', 'Cantidad', 'Unidad',
-        'Monto (USD)', 'Peso Neto', 'Peso Bruto', 'FOB (USD)',
-        'Flete (USD)', 'Seguro (USD)', 'Aduana', 'Departamento',
+        'Fecha',
+        'Operación',
+        'Posición',
+        'Importador',
+        'Proveedor',
+        'Origen',
+        'Procedencia',
+        'Detalle',
+        'Cantidad',
+        'Unidad',
+        'Monto (USD)',
+        'Peso Neto',
+        'Peso Bruto',
+        'FOB (USD)',
+        'Flete (USD)',
+        'Seguro (USD)',
+        'Aduana',
+        'Departamento',
       ],
     ];
     const detalleData = declaraciones.map((d) => [
@@ -966,7 +1170,14 @@ export class DeclaracionesService {
     ]);
     // Add totals row
     detalleData.push([
-      'Total', '', '', '', '', '', '', '',
+      'Total',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
       declaraciones.reduce((s, d) => s + fmt(d.cantidad), 0),
       '',
       totalCif,
@@ -975,7 +1186,8 @@ export class DeclaracionesService {
       Number(resumen._sum.fob ?? 0),
       declaraciones.reduce((s, d) => s + fmt(d.flete_item), 0),
       declaraciones.reduce((s, d) => s + fmt(d.seg_item), 0),
-      '', '',
+      '',
+      '',
     ]);
     const wsDetalleData = [...detalleHeader, ...detalleData];
     const wsDetalle = XLSX.utils.aoa_to_sheet(wsDetalleData);
@@ -1040,7 +1252,9 @@ export class DeclaracionesService {
         const m = String(d.getMonth() + 1).padStart(2, '0');
         return `${y}${m}`;
       };
-      parts.push(`${formatDate(filtros.fecha_desde)} al ${formatDate(filtros.fecha_hasta)}`);
+      parts.push(
+        `${formatDate(filtros.fecha_desde)} al ${formatDate(filtros.fecha_hasta)}`,
+      );
     } else {
       parts.push(new Date().getFullYear().toString());
     }

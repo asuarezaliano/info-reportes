@@ -4,6 +4,7 @@ import {
   Get,
   Query,
   Res,
+  UseGuards,
   UseInterceptors,
   UploadedFile,
   ParseFilePipe,
@@ -12,6 +13,7 @@ import {
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DeclaracionesService } from './declaraciones.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { diskStorage } from 'multer';
 import { mkdirSync } from 'node:fs';
 import { join, extname } from 'node:path';
@@ -20,6 +22,7 @@ const UPLOAD_DIR = join(process.cwd(), 'tmp', 'uploads');
 mkdirSync(UPLOAD_DIR, { recursive: true });
 
 @Controller('declaraciones')
+@UseGuards(JwtAuthGuard)
 export class DeclaracionesController {
   constructor(private readonly declaracionesService: DeclaracionesService) {}
 
