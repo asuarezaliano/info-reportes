@@ -1,0 +1,103 @@
+.button {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, color 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.button:focus-visible {
+  outline: none;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.size_sm {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.size_md {
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+}
+
+.size_lg {
+  padding: 1rem 1.15rem;
+  font-size: 1rem;
+}
+
+/* Azul gri */
+.variant_blue {
+  background: linear-gradient(180deg, #3f5fae 0%, #2f4e99 100%);
+  color: #f8fbff;
+  box-shadow: 0 6px 14px rgba(38, 72, 155, 0.35);
+}
+
+.variant_blue:hover {
+  background: linear-gradient(180deg, #3756a0 0%, #29468c 100%);
+}
+
+.variant_blue:focus-visible {
+  box-shadow: 0 0 0 3px rgba(191, 219, 254, 0.7), 0 6px 14px rgba(38, 72, 155, 0.35);
+}
+
+.variant_blue:disabled {
+  background: #90a4d8;
+}
+
+/* Verde old money */
+.variant_green {
+  background: linear-gradient(180deg, #6b8f71 0%, #5a7f61 100%);
+  color: #f5fbf6;
+  box-shadow: 0 6px 14px rgba(76, 113, 85, 0.32);
+}
+
+.variant_green:hover {
+  background: linear-gradient(180deg, #628767 0%, #527658 100%);
+}
+
+.variant_green:focus-visible {
+  box-shadow: 0 0 0 3px rgba(198, 234, 204, 0.9), 0 6px 14px rgba(76, 113, 85, 0.32);
+}
+
+.variant_green:disabled {
+  background: #9ab79f;
+}
+
+/* Rojo cancel */
+.variant_red {
+  background: linear-gradient(180deg, #d44949 0%, #bf2f2f 100%);
+  color: #fff8f8;
+  box-shadow: 0 6px 14px rgba(166, 36, 36, 0.32);
+}
+
+.variant_red:hover {
+  background: linear-gradient(180deg, #c93f3f 0%, #ae2929 100%);
+}
+
+.variant_red:focus-visible {
+  box-shadow: 0 0 0 3px rgba(254, 202, 202, 0.95), 0 6px 14px rgba(166, 36, 36, 0.32);
+}
+
+.variant_red:disabled {
+  background: #e29c9c;
+}
