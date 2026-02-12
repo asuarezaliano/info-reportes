@@ -1,6 +1,7 @@
 "use client";
 
 import MultiSelectCountry from "@/components/multi-select-country";
+import { Button } from "@/components/ui";
 import type { FiltrosState } from "@/hooks/use-filtros-busqueda";
 import styles from "./header-filter.module.css";
 
@@ -61,9 +62,33 @@ export default function HeaderFilter({
     setSubPartida,
   } = setFiltrosForm;
 
+  const activeFiltersCount = [
+    paisOrige.length > 0,
+    !!deptoDes,
+    !!fechaDesde,
+    !!fechaHasta,
+    !!importador,
+    !!proveedor,
+    !!descripcion,
+    !!capitulo,
+    !!subPartida,
+  ].filter(Boolean).length;
+
   return (
     <section className={styles.busqueda}>
-      <h2>Filtros de Búsqueda</h2>
+      <div className={styles.sectionHeader}>
+        <div>
+          <h2>Filtros de Búsqueda</h2>
+          <p className={styles.sectionSubtitle}>
+            Define criterios para explorar y segmentar los datos aduaneros.
+          </p>
+        </div>
+        <span className={styles.sectionBadge}>
+          {activeFiltersCount} filtro{activeFiltersCount === 1 ? "" : "s"} activo
+          {activeFiltersCount === 1 ? "" : "s"}
+        </span>
+      </div>
+
       <form onSubmit={onBuscar} className={styles.filterGrid}>
         <div className={styles.filterRow5}>
           <div className={styles.filterGroup}>
@@ -175,20 +200,33 @@ export default function HeaderFilter({
         </div>
 
         <div className={styles.filterActions}>
-          <button type="submit" className={styles.btnPrimary}>
+          <Button
+            type="submit"
+            variant="blue"
+            size="sm"
+            className={styles.actionButton}
+          >
             Buscar
-          </button>
-          <button type="button" onClick={onLimpiar} className={styles.btnSecondary}>
+          </Button>
+          <Button
+            type="button"
+            onClick={onLimpiar}
+            variant="red"
+            size="sm"
+            className={styles.actionButton}
+          >
             Limpiar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={onGenerarReporte}
             disabled={!canGenerateReport}
-            className={styles.btnExport}
+            variant="green"
+            size="sm"
+            className={styles.actionButton}
           >
             Generar Reporte
-          </button>
+          </Button>
         </div>
       </form>
     </section>

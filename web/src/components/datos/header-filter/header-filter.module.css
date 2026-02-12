@@ -1,18 +1,56 @@
 /* ── Section Container ── */
 .busqueda {
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
+  border: 1px solid #d9e5dc;
+  border-radius: 14px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 22px rgba(76, 113, 85, 0.08);
+}
+
+.busqueda::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #3f5d45;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
 }
 
 .busqueda h2 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--header-bg);
-  margin-bottom: 1.25rem;
+  color: #3f5d45;
+  margin-bottom: 0.25rem;
+}
+
+.sectionSubtitle {
+  color: #6b7280;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.sectionBadge {
+  flex-shrink: 0;
+  background: #edf5ef;
+  color: #486a4e;
+  border: 1px solid #c6d8ca;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 /* ── Filter Grid ── */
@@ -61,43 +99,61 @@
 }
 
 .filterLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--muted);
+  color: #5f6b7d;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.filterLabel::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #7aa07f;
 }
 
 .filterActions {
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed #d7e2da;
+}
+
+.actionButton {
+  min-width: 108px;
 }
 
 /* ── Inputs ── */
 .input {
-  padding: 0.55rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 0.62rem 0.9rem;
+  border: 1px solid #c6d8ca;
+  border-radius: 10px;
   font-size: 0.9rem;
-  background: var(--surface);
+  background: #ffffff;
   color: var(--foreground);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  border-color: #5a7f61;
+  box-shadow: 0 0 0 3px rgba(106, 143, 113, 0.18);
   background: var(--background);
 }
 
 .select {
-  padding: 0.55rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 0.62rem 0.9rem;
+  border: 1px solid #c6d8ca;
+  border-radius: 10px;
   font-size: 0.9rem;
-  background: var(--surface);
+  background: #ffffff;
   color: var(--foreground);
   cursor: pointer;
   appearance: auto;
@@ -106,8 +162,8 @@
 
 .select:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  border-color: #5a7f61;
+  box-shadow: 0 0 0 3px rgba(106, 143, 113, 0.18);
 }
 
 .select:disabled {
@@ -117,11 +173,11 @@
 
 /* ── Buttons ── */
 .btnPrimary {
-  padding: 0.55rem 1.25rem;
-  background: var(--primary);
-  color: white;
+  padding: 0.58rem 1.2rem;
+  background: linear-gradient(180deg, #3f5fae 0%, #2f4e99 100%);
+  color: #f8fbff;
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
@@ -129,8 +185,8 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: var(--primary-hover);
-  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+  background: linear-gradient(180deg, #3858a2 0%, #29468c 100%);
+  box-shadow: 0 4px 10px rgba(47, 78, 153, 0.32);
 }
 
 .btnPrimary:disabled {
@@ -139,11 +195,11 @@
 }
 
 .btnSecondary {
-  padding: 0.55rem 1.25rem;
-  background: var(--surface);
-  color: var(--foreground);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 0.58rem 1.2rem;
+  background: #f7faf8;
+  color: #486a4e;
+  border: 1px solid #c6d8ca;
+  border-radius: 9px;
   font-weight: 500;
   cursor: pointer;
   font-size: 0.9rem;
@@ -151,15 +207,15 @@
 }
 
 .btnSecondary:hover {
-  background: var(--border);
+  background: #edf5ef;
 }
 
 .btnExport {
-  padding: 0.55rem 1.25rem;
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  padding: 0.58rem 1.2rem;
+  background: linear-gradient(180deg, #6b8f71 0%, #5a7f61 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
@@ -170,8 +226,8 @@
 }
 
 .btnExport:hover:not(:disabled) {
-  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+  background: linear-gradient(180deg, #628767 0%, #527658 100%);
+  box-shadow: 0 4px 10px rgba(82, 118, 88, 0.35);
   transform: translateY(-1px);
 }
 
@@ -179,4 +235,15 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+@media (max-width: 720px) {
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filterActions {
+    flex-wrap: wrap;
+  }
 }

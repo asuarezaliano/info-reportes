@@ -53,7 +53,10 @@ export default function DatosPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          <h1>Datos Aduaneros</h1>
+          <h1 className={styles.title}>Datos Aduaneros</h1>
+          <p className={styles.legend}>
+            Centro de consulta y analisis de importaciones aduaneras
+          </p>
         </div>
         <Logo size={140} />
       </header>

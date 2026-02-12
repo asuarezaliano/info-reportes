@@ -8,25 +8,32 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .headerContent {
   flex: 1;
 }
 
-.header h1 {
+.title {
   margin: 0;
-  font-size: 1.85rem;
+  font-size: 2rem;
   font-weight: 800;
-  color: var(--header-bg);
+  color: #3f5d45;
   letter-spacing: -0.02em;
+  -webkit-text-stroke: 0.6px #111827;
+  text-shadow: 0 0 0 #111827;
 }
 
-.header p {
-  color: var(--muted);
-  font-size: 0.95rem;
-  margin-top: 0.25rem;
+.legend {
+  margin-top: 0.45rem;
+  color: #5a7f61;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 /* ── Main tabs ── */
@@ -34,7 +41,7 @@
   display: flex;
   gap: 0;
   margin-bottom: 1rem;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid #d6e3d9;
 }
 
 .mainTab {
@@ -51,12 +58,12 @@
 }
 
 .mainTab:hover {
-  color: var(--foreground);
+  color: #4c7155;
 }
 
 .mainTabActive {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+  color: #5a7f61;
+  border-bottom-color: #5a7f61;
 }
 
 .reportTabGroup {
