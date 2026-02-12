@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getFlag } from "@/lib/country-flags";
 import { HS_CHAPTERS } from "@/lib/hs-chapters";
+import { Lista, type ListaColumn } from "@/components/shared/lista";
 import {
   BarChart,
   Bar,
@@ -13,19 +14,11 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import type { FiltrosState } from "@/hooks/use-filtros-busqueda";
+import type { FiltrosState, ReporteDataBusqueda } from "@/hooks/use-filtros-busqueda";
 import styles from "./reporte-generated.module.css";
 
-type ReporteData = {
-  totalMonto: number;
-  totalPesoNeto: number;
-  porImportador: { importador: string; monto: number; pesoNeto: number; operaciones: number }[];
-  porProveedor: { proveedor: string; pais: string; monto: number; pesoNeto: number; operaciones: number }[];
-  porPaisProcedencia: { pais: string; monto: number; pesoNeto: number; operaciones: number }[];
-};
-
 type ReporteGeneratedProps = {
-  reporteData: ReporteData;
+  reporteData: ReporteDataBusqueda;
   filtrosForm: FiltrosState;
   subPartidas: { codigo: string; descripcion: string }[] | undefined;
   totalRegistros: number;
@@ -49,6 +42,48 @@ export default function ReporteGenerated({
   onClose,
 }: ReporteGeneratedProps) {
   const [tabReporteVisual, setTabReporteVisual] = useState<"importadores" | "proveedores" | "paises">("importadores");
+  const totalMonto = reporteData.totalMonto || 1;
+
+  const columnsImportadores: ListaColumn<ReporteDataBusqueda["porImportador"][number]>[] = [
+    { id: "idx", header: "#", cell: (_r, i) => i + 1, align: "right" },
+    { id: "importador", header: "Importador", cell: (r) => r.importador },
+    { id: "monto", header: "Monto USD", cell: (r) => `$${fmt(r.monto)}`, align: "right" },
+    { id: "pesoNeto", header: "Peso Neto (Kg)", cell: (r) => fmt(r.pesoNeto), align: "right" },
+    {
+      id: "porcentaje",
+      header: "% Monto",
+      cell: (r) => `${((r.monto / totalMonto) * 100).toFixed(2)}%`,
+      align: "right",
+    },
+  ];
+
+  const columnsProveedores: ListaColumn<ReporteDataBusqueda["porProveedor"][number]>[] = [
+    { id: "idx", header: "#", cell: (_r, i) => i + 1, align: "right" },
+    { id: "proveedor", header: "Proveedor", cell: (r) => r.proveedor },
+    { id: "pais", header: "País", cell: (r) => `${getFlag(r.pais)} ${r.pais}` },
+    { id: "operaciones", header: "Operaciones", cell: (r) => r.operaciones.toLocaleString(), align: "right" },
+    { id: "monto", header: "Monto USD", cell: (r) => `$${fmt(r.monto)}`, align: "right" },
+    { id: "pesoNeto", header: "Peso Neto (Kg)", cell: (r) => fmt(r.pesoNeto), align: "right" },
+    {
+      id: "porcentaje",
+      header: "% Monto",
+      cell: (r) => `${((r.monto / totalMonto) * 100).toFixed(2)}%`,
+      align: "right",
+    },
+  ];
+
+  const columnsPaises: ListaColumn<ReporteDataBusqueda["porPaisProcedencia"][number]>[] = [
+    { id: "idx", header: "#", cell: (_r, i) => i + 1, align: "right" },
+    { id: "pais", header: "País", cell: (r) => `${getFlag(r.pais)} ${r.pais}` },
+    { id: "monto", header: "Monto USD", cell: (r) => `$${fmt(r.monto)}`, align: "right" },
+    { id: "pesoNeto", header: "Peso Neto (Kg)", cell: (r) => fmt(r.pesoNeto), align: "right" },
+    {
+      id: "porcentaje",
+      header: "% Monto",
+      cell: (r) => `${((r.monto / totalMonto) * 100).toFixed(2)}%`,
+      align: "right",
+    },
+  ];
 
   return (
     <section className={styles.reporteVisual}>
@@ -72,6 +107,10 @@ export default function ReporteGenerated({
           <div className={styles.filtroItem}>
             <span className={styles.filtroLabel}>Importador:</span>
             <span className={styles.filtroValue}>{filtrosForm.importador || "Todos"}</span>
+          </div>
+          <div className={styles.filtroItem}>
+            <span className={styles.filtroLabel}>Proveedor:</span>
+            <span className={styles.filtroValue}>{filtrosForm.proveedor || "Todos"}</span>
           </div>
           <div className={styles.filtroItem}>
             <span className={styles.filtroLabel}>Descripción:</span>
@@ -157,32 +196,13 @@ export default function ReporteGenerated({
       {tabReporteVisual === "importadores" && (
         <div className={styles.reporteTabContent}>
           <h3>Lista de Importadores</h3>
-          <div className={styles.tableWrapper}>
-            <table className={styles.tablaDatos}>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Importador</th>
-                  <th>Monto USD</th>
-                  <th>Peso Neto (Kg)</th>
-                  <th>% Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reporteData.porImportador.map((r, i) => (
-                  <tr key={i}>
-                    <td>{i + 1}</td>
-                    <td>{r.importador}</td>
-                    <td className={styles.numericCell}>${fmt(r.monto)}</td>
-                    <td className={styles.numericCell}>{fmt(r.pesoNeto)}</td>
-                    <td className={styles.numericCell}>
-                      {((r.monto / reporteData.totalMonto) * 100).toFixed(2)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Lista
+            columns={columnsImportadores}
+            data={reporteData.porImportador}
+            rowKey={(r, i) => `${r.importador}-${i}`}
+            emptyText="No hay importadores para los filtros aplicados"
+            maxHeight={500}
+          />
         </div>
       )}
 
@@ -190,38 +210,13 @@ export default function ReporteGenerated({
       {tabReporteVisual === "proveedores" && (
         <div className={styles.reporteTabContent}>
           <h3>Lista de Proveedores</h3>
-          <div className={styles.tableWrapper}>
-            <table className={styles.tablaDatos}>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Proveedor</th>
-                  <th>País</th>
-                  <th>Operaciones</th>
-                  <th>Monto USD</th>
-                  <th>Peso Neto (Kg)</th>
-                  <th>% Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reporteData.porProveedor.map((r, i) => (
-                  <tr key={i}>
-                    <td>{i + 1}</td>
-                    <td>{r.proveedor}</td>
-                    <td>
-                      {getFlag(r.pais)} {r.pais}
-                    </td>
-                    <td className={styles.numericCell}>{r.operaciones.toLocaleString()}</td>
-                    <td className={styles.numericCell}>${fmt(r.monto)}</td>
-                    <td className={styles.numericCell}>{fmt(r.pesoNeto)}</td>
-                    <td className={styles.numericCell}>
-                      {((r.monto / reporteData.totalMonto) * 100).toFixed(2)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Lista
+            columns={columnsProveedores}
+            data={reporteData.porProveedor}
+            rowKey={(r, i) => `${r.proveedor}-${r.pais}-${i}`}
+            emptyText="No hay proveedores para los filtros aplicados"
+            maxHeight={500}
+          />
 
           {/* Gráfica de barras horizontales por proveedor */}
           {reporteData.porProveedor.length > 0 && (() => {
@@ -229,7 +224,7 @@ export default function ReporteGenerated({
               proveedor: r.proveedor.length > 25 ? r.proveedor.slice(0, 22) + "..." : r.proveedor,
               fullName: r.proveedor,
               pais: r.pais,
-              porcentaje: Number(((r.monto / reporteData.totalMonto) * 100).toFixed(2)),
+              porcentaje: Number(((r.monto / totalMonto) * 100).toFixed(2)),
               monto: r.monto,
               fill: COLORS[i % COLORS.length],
             }));
@@ -292,41 +287,20 @@ export default function ReporteGenerated({
       {tabReporteVisual === "paises" && (
         <div className={styles.reporteTabContent}>
           <h3>Países de Procedencia</h3>
-          <div className={styles.tableWrapper}>
-            <table className={styles.tablaDatos}>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>País</th>
-                  <th>Monto USD</th>
-                  <th>Peso Neto (Kg)</th>
-                  <th>% Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reporteData.porPaisProcedencia.map((r, i) => (
-                  <tr key={i}>
-                    <td>{i + 1}</td>
-                    <td>
-                      {getFlag(r.pais)} {r.pais}
-                    </td>
-                    <td className={styles.numericCell}>${fmt(r.monto)}</td>
-                    <td className={styles.numericCell}>{fmt(r.pesoNeto)}</td>
-                    <td className={styles.numericCell}>
-                      {((r.monto / reporteData.totalMonto) * 100).toFixed(2)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Lista
+            columns={columnsPaises}
+            data={reporteData.porPaisProcedencia}
+            rowKey={(r, i) => `${r.pais}-${i}`}
+            emptyText="No hay países para los filtros aplicados"
+            maxHeight={500}
+          />
 
           {/* Gráfica de barras horizontales por país */}
           {reporteData.porPaisProcedencia.length > 0 && (() => {
             const chartData = reporteData.porPaisProcedencia.slice(0, 10).map((r, i) => ({
               pais: r.pais.length > 20 ? r.pais.slice(0, 18) + "..." : r.pais,
               fullName: r.pais,
-              porcentaje: Number(((r.monto / reporteData.totalMonto) * 100).toFixed(2)),
+              porcentaje: Number(((r.monto / totalMonto) * 100).toFixed(2)),
               monto: r.monto,
               fill: COLORS[i % COLORS.length],
             }));

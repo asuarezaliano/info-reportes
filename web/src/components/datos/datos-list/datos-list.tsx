@@ -1,6 +1,7 @@
 "use client";
 
 import { getFlag } from "@/lib/country-flags";
+import { Lista, type ListaColumn } from "@/components/shared/lista";
 import type { ListadoResultado } from "@/services/declaraciones.service";
 import styles from "./datos-list.module.css";
 
@@ -28,6 +29,8 @@ const formatFecha = (fecha: string | Date | null | undefined): string => {
   return `${dia}/${mes}/${anio}`;
 };
 
+type DeclaracionRow = NonNullable<ListadoResultado["data"]>[number];
+
 export default function DatosList({
   listado,
   isLoading,
@@ -40,6 +43,111 @@ export default function DatosList({
 }: DatosListProps) {
   const sortIndicator = (col: string) =>
     sortCol === col ? (sortDir === "asc" ? " ▲" : " ▼") : "";
+
+  const columns: ListaColumn<DeclaracionRow>[] = [
+    {
+      id: "nro_consec",
+      header: `Nro${sortIndicator("nro_consec")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("nro_consec"),
+      cell: (d) => d.nro_consec,
+    },
+    {
+      id: "pais_orige",
+      header: `País${sortIndicator("pais_orige")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("pais_orige"),
+      cell: (d) => (d.pais_orige ? `${getFlag(d.pais_orige)} ${d.pais_orige}` : "-"),
+    },
+    {
+      id: "importador",
+      header: `Importador${sortIndicator("importador")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("importador"),
+      cell: (d) => d.importador,
+    },
+    {
+      id: "proveedor",
+      header: `Proveedor${sortIndicator("proveedor")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("proveedor"),
+      cell: (d) => d.proveedor ?? "-",
+    },
+    {
+      id: "despachant",
+      header: `Despachante${sortIndicator("despachant")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("despachant"),
+      cell: (d) => d.despachant ?? "-",
+    },
+    {
+      id: "descripcio",
+      header: `Descripción${sortIndicator("descripcio")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("descripcio"),
+      cellClassName: styles.descCell,
+      cell: (d) => (
+        <span className={styles.descText}>
+          {d.descripcio
+            ? `${String(d.descripcio).slice(0, 40)}${String(d.descripcio).length > 40 ? "..." : ""}`
+            : "-"}
+          {d.descripcio && <span className={styles.tooltip}>{String(d.descripcio)}</span>}
+        </span>
+      ),
+    },
+    {
+      id: "acuerdo_co",
+      header: `Acuerdo${sortIndicator("acuerdo_co")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("acuerdo_co"),
+      cell: (d) => d.acuerdo_co ?? "-",
+    },
+    {
+      id: "cantidad",
+      header: `Cantidad${sortIndicator("cantidad")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("cantidad"),
+      cell: (d) => d.cantidad,
+      align: "right",
+    },
+    {
+      id: "fob",
+      header: `FOB (USD)${sortIndicator("fob")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("fob"),
+      cell: (d) => (d.fob != null ? fmt(Number(d.fob)) : "-"),
+      align: "right",
+    },
+    {
+      id: "cif_item",
+      header: `CIF Item (USD)${sortIndicator("cif_item")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("cif_item"),
+      cell: (d) => (d.cif_item != null ? fmt(Number(d.cif_item)) : "-"),
+      align: "right",
+    },
+    {
+      id: "mes",
+      header: `Mes${sortIndicator("mes")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("mes"),
+      cell: (d) => d.mes,
+    },
+    {
+      id: "depto_des",
+      header: `Depto${sortIndicator("depto_des")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("depto_des"),
+      cell: (d) => d.depto_des,
+    },
+    {
+      id: "fecha_reci",
+      header: `Fecha Recepción${sortIndicator("fecha_reci")}`,
+      sortable: true,
+      onHeaderClick: () => onSort("fecha_reci"),
+      cell: (d) => formatFecha(d.fecha_reci as string),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -54,73 +162,13 @@ export default function DatosList({
     <section className={styles.datos}>
       <h2>Datos ({listado?.total ?? 0} registros)</h2>
 
-      <div className={styles.tableWrapper}>
-        <table className={styles.tablaDatos}>
-          <thead>
-            <tr>
-              <th className={styles.sortable} onClick={() => onSort("nro_consec")}>
-                Nro{sortIndicator("nro_consec")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("pais_orige")}>
-                País{sortIndicator("pais_orige")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("importador")}>
-                Importador{sortIndicator("importador")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("despachant")}>
-                Despachante{sortIndicator("despachant")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("descripcio")}>
-                Descripción{sortIndicator("descripcio")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("acuerdo_co")}>
-                Acuerdo{sortIndicator("acuerdo_co")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("cantidad")}>
-                Cantidad{sortIndicator("cantidad")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("fob")}>
-                FOB (USD){sortIndicator("fob")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("cif_item")}>
-                CIF Item (USD){sortIndicator("cif_item")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("mes")}>
-                Mes{sortIndicator("mes")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("depto_des")}>
-                Depto{sortIndicator("depto_des")}
-              </th>
-              <th className={styles.sortable} onClick={() => onSort("fecha_reci")}>
-                Fecha Recepción{sortIndicator("fecha_reci")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {listado?.data.map((d) => (
-              <tr key={d.id}>
-                <td>{d.nro_consec}</td>
-                <td>{d.pais_orige ? `${getFlag(d.pais_orige)} ${d.pais_orige}` : "-"}</td>
-                <td>{d.importador}</td>
-                <td>{d.despachant ?? "-"}</td>
-                <td className={styles.descCell}>
-                  <span className={styles.descText}>
-                    {d.descripcio ? String(d.descripcio).slice(0, 40) + "..." : "-"}
-                    {d.descripcio && <span className={styles.tooltip}>{String(d.descripcio)}</span>}
-                  </span>
-                </td>
-                <td>{d.acuerdo_co ?? "-"}</td>
-                <td>{d.cantidad}</td>
-                <td>{d.fob != null ? fmt(Number(d.fob)) : "-"}</td>
-                <td>{d.cif_item != null ? fmt(Number(d.cif_item)) : "-"}</td>
-                <td>{d.mes}</td>
-                <td>{d.depto_des}</td>
-                <td>{formatFecha(d.fecha_reci as string)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Lista
+        columns={columns}
+        data={listado?.data ?? []}
+        rowKey={(d) => d.id}
+        emptyText="No hay datos para los filtros aplicados"
+        maxHeight={700}
+      />
 
       {listado && (
         <div className={styles.summaryBar}>

@@ -28,14 +28,28 @@
   gap: 1rem;
 }
 
+.filterRow5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
 @media (max-width: 900px) {
   .filterRow4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filterRow5 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 550px) {
   .filterRow4 {
+    grid-template-columns: 1fr;
+  }
+
+  .filterRow5 {
     grid-template-columns: 1fr;
   }
 }

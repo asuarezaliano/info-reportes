@@ -1,15 +1,22 @@
 .container {
   max-width: 1700px;
   margin: 0 auto;
-  padding: 2rem 2.5rem;
+  padding: 0.5rem 2.5rem;
 }
 
 /* ── Header ── */
 .header {
-  margin-bottom: 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.headerContent {
+  flex: 1;
 }
 
 .header h1 {
+  margin: 0;
   font-size: 1.85rem;
   font-weight: 800;
   color: var(--header-bg);
@@ -26,7 +33,7 @@
 .mainTabs {
   display: flex;
   gap: 0;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1rem;
   border-bottom: 2px solid var(--border);
 }
 
@@ -182,7 +189,9 @@
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .btnPrimary:hover:not(:disabled) {
@@ -322,7 +331,9 @@
   font-size: 0.9rem;
   background: var(--surface);
   color: var(--foreground);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .input:focus {
@@ -341,7 +352,9 @@
   color: var(--foreground);
   cursor: pointer;
   appearance: auto;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .select:focus {
@@ -414,7 +427,7 @@
 }
 
 .sortable:hover {
-  background: #1E3A8A !important;
+  background: #1e3a8a !important;
 }
 
 .tablaReporte tbody tr:hover,
@@ -683,7 +696,9 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .cardLarge:hover {
@@ -769,7 +784,7 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #1E40AF, #3B82F6);
+  background: linear-gradient(90deg, #1e40af, #3b82f6);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -856,7 +871,7 @@
 }
 
 .reporteCard {
-  background: linear-gradient(135deg, var(--primary) 0%, #2563EB 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
   color: white;
   border-radius: 12px;
   padding: 1.25rem;

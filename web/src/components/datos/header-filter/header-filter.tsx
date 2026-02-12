@@ -12,6 +12,7 @@ type HeaderFilterProps = {
     setFechaDesde: (value: string) => void;
     setFechaHasta: (value: string) => void;
     setImportador: (value: string) => void;
+    setProveedor: (value: string) => void;
     setDescripcion: (value: string) => void;
     setCapitulo: (value: string) => void;
     setSubPartida: (value: string) => void;
@@ -42,6 +43,7 @@ export default function HeaderFilter({
     fechaDesde,
     fechaHasta,
     importador,
+    proveedor,
     descripcion,
     capitulo,
     subPartida,
@@ -53,6 +55,7 @@ export default function HeaderFilter({
     setFechaDesde,
     setFechaHasta,
     setImportador,
+    setProveedor,
     setDescripcion,
     setCapitulo,
     setSubPartida,
@@ -62,7 +65,7 @@ export default function HeaderFilter({
     <section className={styles.busqueda}>
       <h2>Filtros de Búsqueda</h2>
       <form onSubmit={onBuscar} className={styles.filterGrid}>
-        <div className={styles.filterRow4}>
+        <div className={styles.filterRow5}>
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>País de origen</label>
             <MultiSelectCountry
@@ -90,6 +93,15 @@ export default function HeaderFilter({
             />
           </div>
           <div className={styles.filterGroup}>
+            <label className={styles.filterLabel}>Proveedor</label>
+            <input
+              value={proveedor}
+              onChange={(e) => setProveedor(e.target.value)}
+              placeholder="Nombre del proveedor"
+              className={styles.input}
+            />
+          </div>
+          <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Departamento</label>
             <select
               value={deptoDes}
@@ -106,7 +118,7 @@ export default function HeaderFilter({
           </div>
         </div>
 
-        <div className={styles.filterRow4}>
+        <div className={styles.filterRow5}>
           <div className={styles.filterGroup}>
             <label className={styles.filterLabel}>Categoría producto</label>
             <select

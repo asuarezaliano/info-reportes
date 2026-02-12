@@ -1,10 +1,17 @@
 .page {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   gap: 1rem;
+}
+
+.logoContainer {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
 }
 
 .link {
