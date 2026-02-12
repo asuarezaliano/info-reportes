@@ -290,7 +290,7 @@ export default function ReporteGenerated({
                       <LabelList 
                         dataKey="porcentaje" 
                         position="right" 
-                        formatter={(v: number) => `${v}%`}
+                        formatter={(v) => `${v}%`}
                         style={{ fontSize: '0.75rem', fill: '#374151', fontWeight: 600 }}
                       />
                       {chartData.map((entry, index) => (

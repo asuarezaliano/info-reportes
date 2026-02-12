@@ -58,23 +58,17 @@ export default function PaisesDonutChart({
     });
   }
 
-  const renderCustomLabel = ({
-    cx,
-    cy,
-    midAngle,
-    innerRadius,
-    outerRadius,
-    percent,
-    name,
-  }: {
-    cx: number;
-    cy: number;
-    midAngle: number;
-    innerRadius: number;
-    outerRadius: number;
-    percent: number;
-    name: string;
+  const renderCustomLabel = (props: {
+    cx?: number;
+    cy?: number;
+    midAngle?: number;
+    innerRadius?: number;
+    outerRadius?: number;
+    percent?: number;
+    name?: string;
   }) => {
+    const { cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, percent = 0, name = "" } = props;
+    
     if (percent < 0.05) return null; // No mostrar label si es menos de 5%
     
     const RADIAN = Math.PI / 180;
