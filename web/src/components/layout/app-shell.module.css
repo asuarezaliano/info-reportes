@@ -1,0 +1,29 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.content {
+  min-height: 0;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 0 0.35rem;
+}
+
+.footerLine {
+  width: min(94vw, 1180px);
+  height: 1px;
+  background: #cfd8e3;
+}
+
+.copyright {
+  color: #6b7280;
+  font-size: 0.82rem;
+  text-align: center;
+}
