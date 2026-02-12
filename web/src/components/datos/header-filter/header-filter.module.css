@@ -2,12 +2,12 @@
 .busqueda {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
-  border: 1px solid #d9e5dc;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  border: 1px solid #d7e1f2;
   border-radius: 14px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 8px 22px rgba(76, 113, 85, 0.08);
+  box-shadow: 0 8px 22px rgba(47, 76, 143, 0.08);
 }
 
 .busqueda::before {
@@ -17,7 +17,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: #3f5d45;
+  background: #2f4c8f;
 }
 
 .sectionHeader {
@@ -31,7 +31,7 @@
 .busqueda h2 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #3f5d45;
+  color: #2f4c8f;
   margin-bottom: 0.25rem;
 }
 
@@ -43,9 +43,9 @@
 
 .sectionBadge {
   flex-shrink: 0;
-  background: #edf5ef;
-  color: #486a4e;
-  border: 1px solid #c6d8ca;
+  background: #eef3ff;
+  color: #2f4c8f;
+  border: 1px solid #c8d6f0;
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
   font-size: 0.76rem;
@@ -104,7 +104,7 @@
   gap: 0.35rem;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #5f6b7d;
+  color: #4f5f7a;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -114,7 +114,7 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #7aa07f;
+  background: #5f7fbd;
 }
 
 .filterActions {
@@ -123,7 +123,7 @@
   align-items: flex-end;
   margin-top: 0.35rem;
   padding-top: 0.65rem;
-  border-top: 1px dashed #d7e2da;
+  border-top: 1px dashed #d7e1f2;
 }
 
 .actionButton {
@@ -133,7 +133,7 @@
 /* ── Inputs ── */
 .input {
   padding: 0.62rem 0.9rem;
-  border: 1px solid #c6d8ca;
+  border: 1px solid #c8d6f0;
   border-radius: 10px;
   font-size: 0.9rem;
   background: #ffffff;
@@ -143,14 +143,14 @@
 
 .input:focus {
   outline: none;
-  border-color: #5a7f61;
-  box-shadow: 0 0 0 3px rgba(106, 143, 113, 0.18);
+  border-color: #4b67a8;
+  box-shadow: 0 0 0 3px rgba(75, 103, 168, 0.18);
   background: var(--background);
 }
 
 .select {
   padding: 0.62rem 0.9rem;
-  border: 1px solid #c6d8ca;
+  border: 1px solid #c8d6f0;
   border-radius: 10px;
   font-size: 0.9rem;
   background: #ffffff;
@@ -162,8 +162,8 @@
 
 .select:focus {
   outline: none;
-  border-color: #5a7f61;
-  box-shadow: 0 0 0 3px rgba(106, 143, 113, 0.18);
+  border-color: #4b67a8;
+  box-shadow: 0 0 0 3px rgba(75, 103, 168, 0.18);
 }
 
 .select:disabled {
@@ -196,9 +196,9 @@
 
 .btnSecondary {
   padding: 0.58rem 1.2rem;
-  background: #f7faf8;
-  color: #486a4e;
-  border: 1px solid #c6d8ca;
+  background: #f6f9ff;
+  color: #2f4c8f;
+  border: 1px solid #c8d6f0;
   border-radius: 9px;
   font-weight: 500;
   cursor: pointer;
@@ -207,7 +207,7 @@
 }
 
 .btnSecondary:hover {
-  background: #edf5ef;
+  background: #e7eefc;
 }
 
 .btnExport {

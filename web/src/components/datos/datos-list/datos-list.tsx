@@ -50,6 +50,8 @@ export default function DatosList({
       header: `Nro${sortIndicator("nro_consec")}`,
       sortable: true,
       onHeaderClick: () => onSort("nro_consec"),
+      headerClassName: styles.stickyFirstCol,
+      cellClassName: styles.stickyFirstCol,
       cell: (d) => d.nro_consec,
     },
     {
@@ -115,7 +117,8 @@ export default function DatosList({
       header: `FOB (USD)${sortIndicator("fob")}`,
       sortable: true,
       onHeaderClick: () => onSort("fob"),
-      cell: (d) => (d.fob != null ? fmt(Number(d.fob)) : "-"),
+      cellClassName: styles.moneyCell,
+      cell: (d) => (d.fob != null ? `$${fmt(Number(d.fob))}` : "-"),
       align: "right",
     },
     {
@@ -123,15 +126,9 @@ export default function DatosList({
       header: `CIF Item (USD)${sortIndicator("cif_item")}`,
       sortable: true,
       onHeaderClick: () => onSort("cif_item"),
-      cell: (d) => (d.cif_item != null ? fmt(Number(d.cif_item)) : "-"),
+      cellClassName: styles.moneyCell,
+      cell: (d) => (d.cif_item != null ? `$${fmt(Number(d.cif_item))}` : "-"),
       align: "right",
-    },
-    {
-      id: "mes",
-      header: `Mes${sortIndicator("mes")}`,
-      sortable: true,
-      onHeaderClick: () => onSort("mes"),
-      cell: (d) => d.mes,
     },
     {
       id: "depto_des",
@@ -168,6 +165,8 @@ export default function DatosList({
         rowKey={(d) => d.id}
         emptyText="No hay datos para los filtros aplicados"
         maxHeight={700}
+        wrapperClassName={styles.enterpriseWrapper}
+        tableClassName={styles.enterpriseTable}
       />
 
       {listado && (

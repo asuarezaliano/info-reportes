@@ -18,6 +18,8 @@ type ListaProps<T> = {
   rowKey?: (row: T, index: number) => string | number;
   emptyText?: string;
   maxHeight?: number;
+  wrapperClassName?: string;
+  tableClassName?: string;
 };
 
 const cx = (...classes: Array<string | undefined | false>) => classes.filter(Boolean).join(" ");
@@ -28,10 +30,15 @@ export default function Lista<T>({
   rowKey,
   emptyText = "Sin datos",
   maxHeight,
+  wrapperClassName,
+  tableClassName,
 }: ListaProps<T>) {
   return (
-    <div className={styles.tableWrapper} style={maxHeight ? { maxHeight } : undefined}>
-      <table className={cx(styles.table, styles.rowHover)}>
+    <div
+      className={cx(styles.tableWrapper, wrapperClassName)}
+      style={maxHeight ? { maxHeight } : undefined}
+    >
+      <table className={cx(styles.table, styles.rowHover, tableClassName)}>
         <thead>
           <tr>
             {columns.map((col) => (

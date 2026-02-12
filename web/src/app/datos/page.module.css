@@ -23,15 +23,15 @@
   margin: 0;
   font-size: 2rem;
   font-weight: 800;
-  color: #3f5d45;
+  color: #2f4c8f;
   letter-spacing: -0.02em;
-  -webkit-text-stroke: 0.6px #111827;
-  text-shadow: 0 0 0 #111827;
+  -webkit-text-stroke: 0.6px #1f2f57;
+  text-shadow: 0 0 0 #1f2f57;
 }
 
 .legend {
   margin-top: 0.45rem;
-  color: #5a7f61;
+  color: #4d69a7;
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -41,7 +41,7 @@
   display: flex;
   gap: 0;
   margin-bottom: 1rem;
-  border-bottom: 2px solid #d6e3d9;
+  border-bottom: 2px solid #d7e1f2;
 }
 
 .mainTab {
@@ -58,12 +58,12 @@
 }
 
 .mainTab:hover {
-  color: #4c7155;
+  color: #385aa0;
 }
 
 .mainTabActive {
-  color: #5a7f61;
-  border-bottom-color: #5a7f61;
+  color: #2f4c8f;
+  border-bottom-color: #2f4c8f;
 }
 
 .reportTabGroup {

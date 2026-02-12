@@ -1,17 +1,17 @@
 /* ── Section Container ── */
 .datos {
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfcfb 100%);
+  border: 1px solid #dfe5ea;
+  border-radius: 14px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
 }
 
 .datos h2 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--header-bg);
+  color: #2f4c8f;
   margin-bottom: 1.25rem;
 }
 
@@ -112,11 +112,13 @@
   display: flex;
   gap: 2.5rem;
   margin-top: 1.25rem;
-  padding: 1.25rem 1.5rem;
-  background: var(--accent-light);
-  border: 1px solid var(--accent-border);
-  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(180deg, #27478f 0%, #203a75 100%);
+  border: 1px solid #1d3366;
+  border-radius: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .summaryItem {
@@ -130,47 +132,94 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted);
+  color: #f2deaa;
 }
 
 .summaryValue {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  color: var(--accent);
+  color: #ffd277;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
 }
 
 /* ── Pagination ── */
 .paginacion {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
   margin-top: 1.25rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed #dde4ea;
 }
 
 .paginacion button {
-  padding: 0.45rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
+  padding: 0.5rem 1rem;
+  border: 1px solid #2f4c8f;
+  border-radius: 9px;
+  background: #2f4c8f;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9rem;
-  transition: all 0.15s;
+  color: #ffffff;
+  transition: all 0.2s ease;
 }
 
 .paginacion button:hover:not(:disabled) {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+  background: #243e77;
+  border-color: #243e77;
 }
 
 .paginacion button:disabled {
-  opacity: 0.4;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
 .paginacion span {
   font-size: 0.9rem;
-  color: var(--muted);
-  font-weight: 500;
+  color: #5f6b7d;
+  font-weight: 600;
+}
+
+.enterpriseWrapper {
+  border: 1px solid #d8e1e8;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.enterpriseTable th {
+  background: #22345f;
+  color: #eef7f0;
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.enterpriseTable td {
+  border-bottom: 1px solid #e6edf2;
+}
+
+.enterpriseTable tbody tr:nth-child(even) {
+  background: #fcfefc;
+}
+
+.enterpriseTable tbody tr:hover {
+  background: #f1f5f9 !important;
+}
+
+.stickyFirstCol {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #f8fafc;
+}
+
+.enterpriseTable th.stickyFirstCol {
+  z-index: 3;
+  background: #22345f;
+}
+
+.moneyCell {
+  color: #22345f;
+  font-weight: 600;
 }
