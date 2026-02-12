@@ -14,6 +14,7 @@ import {
   Legend,
   AreaChart,
   Area,
+  LabelList,
 } from "recharts";
 import { getFlag } from "@/lib/country-flags";
 import { HS_CHAPTERS } from "@/lib/hs-chapters";
@@ -45,13 +46,13 @@ const fmtTooltip = (v: number | undefined) => [
 ];
 
 const COLORS_PIE = [
-  "#1E40AF", "#2563EB", "#3B82F6", "#60A5FA", "#93C5FD",
-  "#10B981", "#34D399", "#6EE7B7", "#A3A3A3",
+  "#1E3A8A", "#2563EB", "#3B82F6", "#0EA5E9", "#06B6D4",
+  "#1E40AF", "#4F46E5", "#6366F1", "#0284C7",
 ];
 
 const COLORS_CATEGORIAS = [
-  "#1E40AF", "#2563EB", "#3B82F6", "#60A5FA", "#93C5FD",
-  "#D97706", "#F59E0B", "#FBBF24", "#A3A3A3",
+  "#1E3A8A", "#2563EB", "#3B82F6", "#0EA5E9", "#06B6D4",
+  "#1E40AF", "#4F46E5", "#6366F1", "#0284C7",
 ];
 
 export default function ReporteGraficas({
@@ -74,30 +75,49 @@ export default function ReporteGraficas({
               <AreaChart data={evolucion} margin={{ left: 10, right: 30, top: 10, bottom: 5 }}>
                 <defs>
                   <linearGradient id="colorCif" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1E40AF" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#1E40AF" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="#1E3A8A" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#1E3A8A" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="colorFob" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#D97706" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#D97706" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="mes" style={{ fontSize: "0.75rem" }} />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="#e5e7eb" 
+                  strokeOpacity={0.6}
+                  vertical={false}
+                />
+                <XAxis 
+                  dataKey="mes" 
+                  style={{ fontSize: "0.75rem" }}
+                  tick={{ fill: "#64748b" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickLine={{ stroke: "#e5e7eb" }}
+                />
                 <YAxis
                   tickFormatter={(v) => `$${(v / 1_000_000).toFixed(1)}M`}
                   style={{ fontSize: "0.75rem" }}
+                  tick={{ fill: "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <Tooltip
                   formatter={(v: number | undefined) => [`$${fmt(v ?? 0)}`, ""]}
-                  labelStyle={{ fontWeight: "bold" }}
+                  labelStyle={{ fontWeight: "bold", color: "#1e3a8a" }}
+                  contentStyle={{ 
+                    borderRadius: "12px", 
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+                  }}
                 />
                 <Legend />
                 <Area
                   type="monotone"
                   dataKey="totalCif"
                   name="CIF (USD)"
-                  stroke="#1E40AF"
+                  stroke="#1E3A8A"
                   fillOpacity={1}
                   fill="url(#colorCif)"
                   strokeWidth={2}
@@ -106,7 +126,7 @@ export default function ReporteGraficas({
                   type="monotone"
                   dataKey="totalFob"
                   name="FOB (USD)"
-                  stroke="#D97706"
+                  stroke="#0EA5E9"
                   fillOpacity={1}
                   fill="url(#colorFob)"
                   strokeWidth={2}
@@ -135,17 +155,40 @@ export default function ReporteGraficas({
                 layout="vertical"
                 margin={{ left: 10, right: 20, top: 5, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="#e5e7eb" 
+                  strokeOpacity={0.6}
+                  vertical={false}
+                />
                 <XAxis
                   type="number"
                   tickFormatter={(v) => `$${(v / 1_000_000).toFixed(1)}M`}
                   style={{ fontSize: "0.72rem" }}
+                  tick={{ fill: "#64748b" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickLine={{ stroke: "#e5e7eb" }}
                 />
-                <YAxis type="category" dataKey="name" width={130} style={{ fontSize: "0.72rem" }} />
-                <Tooltip formatter={fmtTooltip} />
+                <YAxis 
+                  type="category" 
+                  dataKey="name" 
+                  width={130} 
+                  style={{ fontSize: "0.72rem" }}
+                  tick={{ fill: "#374151" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  formatter={fmtTooltip}
+                  contentStyle={{ 
+                    borderRadius: "12px", 
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+                  }}
+                />
                 <Legend />
-                <Bar dataKey="CIF" name="CIF" fill="#1E40AF" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="FOB" name="FOB" fill="#93C5FD" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="CIF" name="CIF" fill="#1E3A8A" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="FOB" name="FOB" fill="#3B82F6" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -204,15 +247,38 @@ export default function ReporteGraficas({
                 layout="vertical"
                 margin={{ left: 10, right: 20, top: 5, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="#e5e7eb" 
+                  strokeOpacity={0.6}
+                  vertical={false}
+                />
                 <XAxis
                   type="number"
                   tickFormatter={(v) => `$${(v / 1_000_000).toFixed(1)}M`}
                   style={{ fontSize: "0.72rem" }}
+                  tick={{ fill: "#64748b" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickLine={{ stroke: "#e5e7eb" }}
                 />
-                <YAxis type="category" dataKey="name" width={200} style={{ fontSize: "0.7rem" }} />
-                <Tooltip formatter={(v: number | undefined) => [`$${fmt(v ?? 0)}`, "CIF (USD)"]} />
-                <Bar dataKey="CIF" fill="#1E3A8A" radius={[0, 4, 4, 0]} />
+                <YAxis 
+                  type="category" 
+                  dataKey="name" 
+                  width={200} 
+                  style={{ fontSize: "0.7rem" }}
+                  tick={{ fill: "#374151" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  formatter={(v: number | undefined) => [`$${fmt(v ?? 0)}`, "CIF (USD)"]}
+                  contentStyle={{ 
+                    borderRadius: "12px", 
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+                  }}
+                />
+                <Bar dataKey="CIF" fill="#1E3A8A" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

@@ -1,0 +1,67 @@
+.container {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.75rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.title {
+  margin: 0 0 1.25rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.chartWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Tooltip */
+.tooltip {
+  background: #ffffff;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+}
+
+.tooltip p {
+  margin: 6px 0;
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.tooltip p strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.tooltipTitle {
+  font-weight: 700;
+  margin: 0 0 10px 0 !important;
+  font-size: 1rem !important;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Legend */
+.legendItem {
+  font-size: 0.82rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.legendPercent {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 0.75rem;
+}

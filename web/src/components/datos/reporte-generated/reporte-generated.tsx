@@ -4,6 +4,7 @@ import { useState } from "react";
 import { getFlag } from "@/lib/country-flags";
 import { HS_CHAPTERS } from "@/lib/hs-chapters";
 import { Lista, type ListaColumn } from "@/components/shared/lista";
+import { PaisesDonutChart } from "@/components/shared/charts";
 import {
   BarChart,
   Bar,
@@ -13,6 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LabelList,
 } from "recharts";
 import type { FiltrosState, ReporteDataBusqueda } from "@/hooks/use-filtros-busqueda";
 import styles from "./reporte-generated.module.css";
@@ -29,9 +31,8 @@ const fmt = (n: number) =>
   n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const COLORS = [
-  "#1E40AF", "#D97706", "#10B981", "#7C3AED", "#EC4899",
-  "#0891B2", "#DC2626", "#4F46E5", "#059669", "#CA8A04",
-  "#BE185D", "#0D9488", "#7C2D12", "#6366F1", "#15803D"
+  "#1E3A8A", "#2563EB", "#3B82F6", "#0EA5E9", "#06B6D4",
+  "#1E40AF", "#4F46E5", "#6366F1", "#0284C7", "#0891B2",
 ];
 
 export default function ReporteGenerated({
@@ -235,14 +236,21 @@ export default function ReporteGenerated({
                   <BarChart
                     data={chartData}
                     layout="vertical"
-                    margin={{ left: 20, right: 30, top: 20, bottom: 20 }}
+                    margin={{ left: 20, right: 60, top: 20, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke="#e5e7eb" 
+                      strokeOpacity={0.6}
+                      vertical={false}
+                    />
                     <XAxis
                       type="number"
                       tickFormatter={(v) => `${v}%`}
                       style={{ fontSize: "0.75rem" }}
-                      tick={{ fill: "#374151" }}
+                      tick={{ fill: "#64748b" }}
+                      axisLine={{ stroke: "#e5e7eb" }}
+                      tickLine={{ stroke: "#e5e7eb" }}
                     />
                     <YAxis
                       type="category"
@@ -251,6 +259,8 @@ export default function ReporteGenerated({
                       interval={0}
                       style={{ fontSize: "0.75rem", fontWeight: 500 }}
                       tick={{ fill: "#374151" }}
+                      axisLine={false}
+                      tickLine={false}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
@@ -270,7 +280,19 @@ export default function ReporteGenerated({
                         return null;
                       }}
                     />
-                    <Bar dataKey="porcentaje" name="Porcentaje" radius={[0, 6, 6, 0]}>
+                    <Bar 
+                      dataKey="porcentaje" 
+                      name="Porcentaje" 
+                      radius={[0, 8, 8, 0]}
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                    >
+                      <LabelList 
+                        dataKey="porcentaje" 
+                        position="right" 
+                        formatter={(v: number) => `${v}%`}
+                        style={{ fontSize: '0.75rem', fill: '#374151', fontWeight: 600 }}
+                      />
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
@@ -295,66 +317,14 @@ export default function ReporteGenerated({
             maxHeight={500}
           />
 
-          {/* Gráfica de barras horizontales por país */}
-          {reporteData.porPaisProcedencia.length > 0 && (() => {
-            const chartData = reporteData.porPaisProcedencia.slice(0, 10).map((r, i) => ({
-              pais: r.pais.length > 20 ? r.pais.slice(0, 18) + "..." : r.pais,
-              fullName: r.pais,
-              porcentaje: Number(((r.monto / totalMonto) * 100).toFixed(2)),
-              monto: r.monto,
-              fill: COLORS[i % COLORS.length],
-            }));
-            return (
-              <div className={styles.chartCardWide}>
-                <h3>Distribución por País (%)</h3>
-                <ResponsiveContainer width="100%" height={450}>
-                  <BarChart
-                    data={chartData}
-                    layout="vertical"
-                    margin={{ left: 20, right: 30, top: 20, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis
-                      type="number"
-                      tickFormatter={(v) => `${v}%`}
-                      style={{ fontSize: "0.75rem" }}
-                      tick={{ fill: "#374151" }}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="pais"
-                      width={150}
-                      interval={0}
-                      style={{ fontSize: "0.75rem", fontWeight: 500 }}
-                      tick={{ fill: "#374151" }}
-                    />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0].payload;
-                          return (
-                            <div className={styles.customTooltip} style={{ borderColor: data.fill }}>
-                              <p className={styles.tooltipTitle} style={{ color: data.fill }}>
-                                {data.fullName}
-                              </p>
-                              <p>Porcentaje: <strong>{data.porcentaje}%</strong></p>
-                              <p>Monto: <strong>${fmt(data.monto)}</strong></p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar dataKey="porcentaje" name="Porcentaje" radius={[0, 6, 6, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            );
-          })()}
+          {/* Gráfica de dona por país */}
+          {reporteData.porPaisProcedencia.length > 0 && (
+            <PaisesDonutChart
+              data={reporteData.porPaisProcedencia}
+              totalMonto={totalMonto}
+              maxItems={8}
+            />
+          )}
         </div>
       )}
     </section>
